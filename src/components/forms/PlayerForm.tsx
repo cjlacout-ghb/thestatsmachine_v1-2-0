@@ -76,132 +76,153 @@ export function PlayerForm({ player, tournamentId, onSave, onCancel, onBulkImpor
 
     if (showImport) {
         return (
-            <div className="form">
-                <h3 className="form-title">Import Players</h3>
-                <p style={{ color: 'var(--text-muted)', marginBottom: 'var(--space-md)', fontSize: '0.875rem' }}>
-                    Format: Name, Jersey#, Position (one per line, comma or tab separated)
-                </p>
-
-                <div className="form-group">
-                    <label>Upload File (CSV or TXT)</label>
-                    <input
-                        type="file"
-                        accept=".csv,.txt"
-                        onChange={handleFileUpload}
-                        ref={fileInputRef}
-                        className="file-input"
-                    />
+            <div className="card" style={{ maxWidth: '600px', margin: '0 auto', boxShadow: 'var(--shadow-premium)' }}>
+                <div className="card-header" style={{ background: 'var(--accent-gradient)', color: 'white', padding: '24px 32px' }}>
+                    <h3 style={{ margin: 0, fontWeight: '800' }}>Bulk Player Import</h3>
+                    <p style={{ margin: '4px 0 0 0', fontSize: '0.8125rem', opacity: 0.9 }}>Upload CSV or paste roster data from your league portal</p>
                 </div>
 
-                <div className="form-group">
-                    <label>Or paste data directly</label>
-                    <textarea
-                        value={importText}
-                        onChange={e => setImportText(e.target.value)}
-                        placeholder="Sofia Martinez, 7, SS&#10;Emma Rodriguez, 22, P&#10;Isabella Chen, 3, C"
-                        rows={8}
-                    />
-                </div>
+                <div style={{ padding: '32px' }}>
+                    <div className="form-group" style={{ marginBottom: '24px' }}>
+                        <label style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Upload Data File</label>
+                        <div style={{ border: '2px dashed var(--border-color)', padding: '24px', textAlign: 'center', borderRadius: '12px', background: 'var(--bg-primary)' }}>
+                            <input
+                                type="file"
+                                accept=".csv,.txt"
+                                onChange={handleFileUpload}
+                                ref={fileInputRef}
+                                style={{ display: 'none' }}
+                            />
+                            <button type="button" className="btn btn-secondary" onClick={() => fileInputRef.current?.click()}>
+                                Select CSV or TXT File
+                            </button>
+                            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '8px' }}>Format: Name, Jersey#, Position (one per line)</p>
+                        </div>
+                    </div>
 
-                {importText && (
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: 'var(--space-md)' }}>
-                        {parsePlayerImport(importText, tournamentId).length} players found
-                    </p>
-                )}
+                    <div className="form-group">
+                        <label style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Or Paste Roster Data</label>
+                        <textarea
+                            value={importText}
+                            onChange={e => setImportText(e.target.value)}
+                            placeholder="Sofia Martinez, 7, SS&#10;Emma Rodriguez, 22, P"
+                            rows={6}
+                            style={{ padding: '16px', borderRadius: '10px', fontSize: '0.9375rem', background: 'var(--bg-primary)', border: '1px solid var(--border-color)' }}
+                        />
+                    </div>
 
-                <div className="form-actions">
-                    <button type="button" className="btn btn-secondary" onClick={() => setShowImport(false)}>
-                        Back
-                    </button>
-                    <button
-                        type="button"
-                        className="btn btn-primary"
-                        onClick={handleImport}
-                        disabled={!importText.trim()}
-                    >
-                        Import Players
-                    </button>
+                    <div style={{ display: 'flex', gap: '16px', marginTop: '32px' }}>
+                        <button type="button" className="btn btn-secondary" onClick={() => setShowImport(false)} style={{ flex: 1 }}>
+                            Back
+                        </button>
+                        <button
+                            type="button"
+                            className="btn btn-primary"
+                            onClick={handleImport}
+                            disabled={!importText.trim()}
+                            style={{ flex: 2 }}
+                        >
+                            Import {importText ? parsePlayerImport(importText, tournamentId).length : ''} Players
+                        </button>
+                    </div>
                 </div>
             </div>
         );
     }
 
     return (
-        <form onSubmit={handleSubmit} className="form">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-lg)' }}>
-                <h3 className="form-title" style={{ margin: 0 }}>{player ? 'Edit Player' : 'New Player'}</h3>
+        <div className="card" style={{ maxWidth: '600px', margin: '0 auto', boxShadow: 'var(--shadow-premium)' }}>
+            <div className="card-header" style={{ background: 'var(--accent-gradient)', color: 'white', padding: '24px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                    <h3 style={{ margin: 0, fontWeight: '800' }}>{player ? 'Edit' : 'Add New'} Athlete</h3>
+                    <p style={{ margin: '4px 0 0 0', fontSize: '0.8125rem', opacity: 0.9 }}>Enter individual player details for tracking</p>
+                </div>
                 {!player && onBulkImport && (
-                    <button type="button" className="btn btn-ghost" onClick={() => setShowImport(true)}>
-                        📥 Import CSV/TXT
+                    <button type="button" className="btn btn-ghost" onClick={() => setShowImport(true)} style={{ color: 'white', background: 'rgba(255,255,255,0.1)' }}>
+                        Bulk Import
                     </button>
                 )}
             </div>
 
-            <div className="form-row">
-                <div className="form-group" style={{ flex: 2 }}>
-                    <label htmlFor="playerName">Player Name *</label>
-                    <input
-                        id="playerName"
-                        type="text"
-                        value={name}
-                        onChange={e => setName(e.target.value)}
-                        placeholder="Sofia Martinez"
-                        className={errors.name ? 'error' : ''}
-                    />
-                    {errors.name && <span className="form-error">{errors.name}</span>}
+            <form onSubmit={handleSubmit} style={{ padding: '32px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px', marginBottom: '24px' }}>
+                    <div className="form-group">
+                        <label style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Full Name</label>
+                        <input
+                            type="text"
+                            value={name}
+                            onChange={e => setName(e.target.value)}
+                            placeholder="Sofia Martinez"
+                            className={errors.name ? 'error' : ''}
+                            style={{ padding: '12px 16px', borderRadius: '10px' }}
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Jersey #</label>
+                        <input
+                            type="text"
+                            value={jerseyNumber}
+                            onChange={e => setJerseyNumber(e.target.value)}
+                            placeholder="7"
+                            className={errors.jerseyNumber ? 'error' : ''}
+                            style={{ padding: '12px 16px', borderRadius: '10px' }}
+                        />
+                    </div>
                 </div>
 
-                <div className="form-group" style={{ flex: 1 }}>
-                    <label htmlFor="jersey">Jersey # *</label>
-                    <input
-                        id="jersey"
-                        type="text"
-                        value={jerseyNumber}
-                        onChange={e => setJerseyNumber(e.target.value)}
-                        placeholder="7"
-                        className={errors.jerseyNumber ? 'error' : ''}
-                    />
-                    {errors.jerseyNumber && <span className="form-error">{errors.jerseyNumber}</span>}
+                <div className="form-group" style={{ marginBottom: '24px' }}>
+                    <label style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '12px', display: 'block' }}>Primary Position</label>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                        {POSITIONS.map(pos => (
+                            <button
+                                key={pos}
+                                type="button"
+                                className={`btn ${primaryPosition === pos ? 'btn-primary' : 'btn-secondary'}`}
+                                onClick={() => {
+                                    setPrimaryPosition(pos);
+                                    setSecondaryPositions(prev => prev.filter(p => p !== pos));
+                                }}
+                                style={{ padding: '8px 16px', borderRadius: '20px', fontSize: '0.8125rem' }}
+                            >
+                                {pos}
+                            </button>
+                        ))}
+                    </div>
                 </div>
-            </div>
 
-            <div className="form-group">
-                <label htmlFor="position">Primary Position</label>
-                <select
-                    id="position"
-                    value={primaryPosition}
-                    onChange={e => setPrimaryPosition(e.target.value as Position)}
-                >
-                    {POSITIONS.map(pos => (
-                        <option key={pos} value={pos}>{pos}</option>
-                    ))}
-                </select>
-            </div>
-
-            <div className="form-group">
-                <label>Secondary Positions</label>
-                <div className="position-grid">
-                    {POSITIONS.filter(p => p !== primaryPosition).map(pos => (
-                        <button
-                            key={pos}
-                            type="button"
-                            className={`position-btn ${secondaryPositions.includes(pos) ? 'active' : ''}`}
-                            onClick={() => toggleSecondary(pos)}
-                        >
-                            {pos}
-                        </button>
-                    ))}
+                <div className="form-group" style={{ marginBottom: '32px' }}>
+                    <label style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '12px', display: 'block' }}>Secondary Options</label>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                        {POSITIONS.filter(p => p !== primaryPosition).map(pos => (
+                            <button
+                                key={pos}
+                                type="button"
+                                className={`btn ${secondaryPositions.includes(pos) ? 'btn-primary' : 'btn-secondary'}`}
+                                style={{
+                                    padding: '8px 16px',
+                                    borderRadius: '20px',
+                                    fontSize: '0.8125rem',
+                                    background: secondaryPositions.includes(pos) ? 'var(--accent-soft)' : 'transparent',
+                                    color: secondaryPositions.includes(pos) ? 'var(--accent-primary)' : 'var(--text-muted)',
+                                    borderColor: secondaryPositions.includes(pos) ? 'var(--accent-primary)' : 'var(--border-color)'
+                                }}
+                                onClick={() => toggleSecondary(pos)}
+                            >
+                                {pos}
+                            </button>
+                        ))}
+                    </div>
                 </div>
-            </div>
 
-            <div className="form-actions">
-                <button type="button" className="btn btn-secondary" onClick={onCancel}>
-                    Cancel
-                </button>
-                <button type="submit" className="btn btn-primary">
-                    {player ? 'Save Changes' : 'Add Player'}
-                </button>
-            </div>
-        </form>
+                <div style={{ display: 'flex', gap: '16px' }}>
+                    <button type="button" className="btn btn-secondary" onClick={onCancel} style={{ flex: 1, padding: '12px' }}>
+                        Discard
+                    </button>
+                    <button type="submit" className="btn btn-primary" style={{ flex: 2, padding: '12px' }}>
+                        {player ? 'Save Profile' : 'Add to Roster'}
+                    </button>
+                </div>
+            </form>
+        </div>
     );
 }

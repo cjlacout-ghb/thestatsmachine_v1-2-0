@@ -8,81 +8,233 @@ const DEFAULT_DATA: AppData = {
     games: []
 };
 
-export function loadData(): AppData {
-    try {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (!stored) return DEFAULT_DATA;
-        return JSON.parse(stored);
-    } catch {
-        console.error('Failed to load data from localStorage');
-        return DEFAULT_DATA;
+import { storeFileHandle, getStoredFileHandle, clearStoredFileHandle } from './db';
+
+const DRIVER_PREFERENCE_KEY = 'tsm_storage_driver';
+
+/**
+ * Interface for storage implementations
+ */
+export interface StorageDriver {
+    name: string;
+    type: 'local' | 'file';
+    load(): Promise<AppData>;
+    save(data: AppData): Promise<void>;
+}
+
+/**
+ * Browser LocalStorage Implementation
+ */
+export class LocalStorageDriver implements StorageDriver {
+    name = 'Browser Cache (Local)';
+    type: 'local' = 'local';
+
+    async load(): Promise<AppData> {
+        try {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (!stored) return DEFAULT_DATA;
+            return JSON.parse(stored);
+        } catch {
+            console.error('Failed to load data from localStorage');
+            return DEFAULT_DATA;
+        }
+    }
+
+    async save(data: AppData): Promise<void> {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        } catch {
+            console.error('Failed to save data to localStorage');
+        }
     }
 }
 
-export function saveData(data: AppData): void {
-    try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    } catch {
-        console.error('Failed to save data to localStorage');
+/**
+ * Native File System Implementation
+ */
+export class FileSystemDriver implements StorageDriver {
+    name = 'Local File';
+    type: 'file' = 'file';
+    private handle: FileSystemFileHandle | null = null;
+
+    constructor(handle?: FileSystemFileHandle) {
+        if (handle) this.handle = handle;
+    }
+
+    async setHandle(handle: FileSystemFileHandle) {
+        this.handle = handle;
+        await storeFileHandle(handle);
+    }
+
+    async load(): Promise<AppData> {
+        if (!this.handle) return DEFAULT_DATA;
+
+        try {
+            // Check permissions
+            const options = { mode: 'readwrite' as FileSystemPermissionMode };
+            if (await this.handle.queryPermission(options) !== 'granted') {
+                if (await this.handle.requestPermission(options) !== 'granted') {
+                    throw new Error('Permission denied');
+                }
+            }
+
+            const file = await this.handle.getFile();
+            const text = await file.text();
+            if (!text) return DEFAULT_DATA;
+            return JSON.parse(text);
+        } catch (err) {
+            console.error('Failed to load file:', err);
+            return DEFAULT_DATA;
+        }
+    }
+
+    async save(data: AppData): Promise<void> {
+        if (!this.handle) return;
+
+        try {
+            const writable = await (this.handle as any).createWritable();
+            await writable.write(JSON.stringify(data, null, 2));
+            await writable.close();
+        } catch (err) {
+            console.error('Failed to save file:', err);
+        }
+    }
+
+    getFileHandle() {
+        return this.handle;
     }
 }
 
-export function saveTournament(tournament: Tournament): void {
-    const data = loadData();
+/**
+ * Manager to handle switching between storage drivers
+ */
+class StorageManager {
+    private driver: StorageDriver;
+
+    constructor(defaultDriver: StorageDriver) {
+        this.driver = defaultDriver;
+    }
+
+    async init() {
+        const pref = localStorage.getItem(DRIVER_PREFERENCE_KEY);
+        if (pref === 'file') {
+            const handle = await getStoredFileHandle();
+            if (handle) {
+                this.driver = new FileSystemDriver(handle);
+            }
+        }
+    }
+
+    async setDriver(driver: StorageDriver) {
+        this.driver = driver;
+        localStorage.setItem(DRIVER_PREFERENCE_KEY, driver.type);
+        if (driver.type === 'local') {
+            await clearStoredFileHandle();
+        }
+        console.log(`Storage switched to: ${driver.name}`);
+    }
+
+    getDriver(): StorageDriver {
+        return this.driver;
+    }
+
+    getDriverName(): string {
+        return this.driver.name;
+    }
+
+    async load(): Promise<AppData> {
+        return this.driver.load();
+    }
+
+    async save(data: AppData): Promise<void> {
+        return this.driver.save(data);
+    }
+
+    hasLegacyData(): boolean {
+        const data = localStorage.getItem(STORAGE_KEY);
+        if (!data) return false;
+        try {
+            const parsed = JSON.parse(data);
+            return parsed.tournaments.length > 0 || parsed.players.length > 0 || parsed.games.length > 0;
+        } catch {
+            return false;
+        }
+    }
+
+    clearLegacyData() {
+        localStorage.removeItem(STORAGE_KEY);
+    }
+}
+
+// Initialize with LocalStorage by default
+export const storageManager = new StorageManager(new LocalStorageDriver());
+
+// --- High Level API (Asynchronous) ---
+
+export async function loadData(): Promise<AppData> {
+    return storageManager.load();
+}
+
+export async function saveData(data: AppData): Promise<void> {
+    return storageManager.save(data);
+}
+
+export async function saveTournament(tournament: Tournament): Promise<void> {
+    const data = await loadData();
     const idx = data.tournaments.findIndex(t => t.id === tournament.id);
     if (idx >= 0) {
         data.tournaments[idx] = tournament;
     } else {
         data.tournaments.push(tournament);
     }
-    saveData(data);
+    await saveData(data);
 }
 
-export function deleteTournament(id: string): void {
-    const data = loadData();
+export async function deleteTournament(id: string): Promise<void> {
+    const data = await loadData();
     data.tournaments = data.tournaments.filter(t => t.id !== id);
     // Also delete related players and games
     data.players = data.players.filter(p => p.tournamentId !== id);
     data.games = data.games.filter(g => g.tournamentId !== id);
-    saveData(data);
+    await saveData(data);
 }
 
-export function savePlayer(player: Player): void {
-    const data = loadData();
+export async function savePlayer(player: Player): Promise<void> {
+    const data = await loadData();
     const idx = data.players.findIndex(p => p.id === player.id);
     if (idx >= 0) {
         data.players[idx] = player;
     } else {
         data.players.push(player);
     }
-    saveData(data);
+    await saveData(data);
 }
 
-export function deletePlayer(id: string): void {
-    const data = loadData();
+export async function deletePlayer(id: string): Promise<void> {
+    const data = await loadData();
     data.players = data.players.filter(p => p.id !== id);
     // Remove player from all game stats
     data.games.forEach(g => {
         g.playerStats = g.playerStats.filter(ps => ps.playerId !== id);
     });
-    saveData(data);
+    await saveData(data);
 }
 
-export function saveGame(game: Game): void {
-    const data = loadData();
+export async function saveGame(game: Game): Promise<void> {
+    const data = await loadData();
     const idx = data.games.findIndex(g => g.id === game.id);
     if (idx >= 0) {
         data.games[idx] = game;
     } else {
         data.games.push(game);
     }
-    saveData(data);
+    await saveData(data);
 }
 
-export function deleteGame(id: string): void {
-    const data = loadData();
+export async function deleteGame(id: string): Promise<void> {
+    const data = await loadData();
     data.games = data.games.filter(g => g.id !== id);
-    saveData(data);
+    await saveData(data);
 }
 
 export function generateId(): string {
