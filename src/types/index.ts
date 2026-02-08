@@ -1,4 +1,4 @@
-// Core types for Softball Stats Tracker
+// Core types for The Stats Machine
 
 export type Position = 'P' | 'C' | '1B' | '2B' | '3B' | 'SS' | 'LF' | 'CF' | 'RF' | 'DP' | 'FLEX';
 

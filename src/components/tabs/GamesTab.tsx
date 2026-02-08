@@ -34,9 +34,9 @@ export function GamesTab({ games, players, onSelectGame, onAddGame }: GamesTabPr
 
     return (
         <div className="dash-content">
-            <div className="section-header" style={{ marginBottom: 'var(--space-lg)' }}>
+            <div className="card-header" style={{ marginBottom: 'var(--space-lg)' }}>
                 <h3 className="card-title">{games.length} Total Games Recorded</h3>
-                <div style={{ display: 'flex', gap: '8px' }}>
+                <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
                     <button className="btn btn-secondary" style={{ padding: '6px 16px', fontSize: '0.8125rem' }}>Full History</button>
                     <button className="btn btn-primary" style={{ padding: '6px 16px', fontSize: '0.8125rem' }}>Export PDF</button>
                 </div>
@@ -51,41 +51,43 @@ export function GamesTab({ games, players, onSelectGame, onAddGame }: GamesTabPr
                     const topBatter = game.playerStats.length > 0 ? game.playerStats.reduce((best, ps) =>
                         ps.h > (best?.h || 0) ? ps : best, game.playerStats[0]) : null;
 
+                    const gameDate = new Date(game.date);
+
                     return (
                         <div
                             key={game.id}
                             className="card"
                             onClick={() => onSelectGame?.(game)}
-                            style={{ cursor: 'pointer', padding: '24px 32px' }}
+                            style={{ cursor: 'pointer', padding: 'var(--space-lg) var(--space-xl)' }}
                         >
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-                                    <div style={{ textAlign: 'center' }}>
-                                        <div style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                                            {new Date(game.date).toLocaleDateString('en-US', { month: 'short' })}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xl)' }}>
+                                    <div className="text-center">
+                                        <div className="text-bold text-muted" style={{ fontSize: '0.75rem', textTransform: 'uppercase' }}>
+                                            {gameDate.toLocaleDateString('en-US', { month: 'short' })}
                                         </div>
-                                        <div style={{ fontSize: '1.5rem', fontWeight: '800', lineHeight: 1 }}>
-                                            {new Date(game.date).toLocaleDateString('en-US', { day: 'numeric' })}
+                                        <div className="text-bold" style={{ fontSize: '1.5rem', lineHeight: 1 }}>
+                                            {gameDate.toLocaleDateString('en-US', { day: 'numeric' })}
                                         </div>
                                     </div>
 
-                                    <div style={{ width: '1px', height: '40px', background: 'var(--border-light)' }} />
+                                    <div className="divider" style={{ width: '1px', height: '40px', margin: '0' }} />
 
                                     <div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', marginBottom: '4px' }}>
                                             <span style={{
                                                 fontSize: '0.625rem',
                                                 fontWeight: '900',
                                                 padding: '2px 8px',
-                                                borderRadius: '4px',
+                                                borderRadius: 'var(--radius-sm)',
                                                 background: isWin ? 'var(--elite)' : isLoss ? 'var(--under)' : 'var(--avg)',
                                                 color: 'white'
                                             }}>
                                                 {isWin ? 'WIN' : isLoss ? 'LOSS' : 'TIE'}
                                             </span>
-                                            <h4 style={{ fontSize: '1.125rem', fontWeight: '800' }}>vs {game.opponent}</h4>
+                                            <h4 className="text-bold" style={{ fontSize: '1.125rem' }}>vs {game.opponent}</h4>
                                         </div>
-                                        <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: '500' }}>
+                                        <div className="text-muted" style={{ fontSize: '0.8125rem', fontWeight: '500' }}>
                                             {game.homeAway === 'home' ? '🏠 Home' : '✈ Away'} • {game.gameType.toUpperCase()}
                                         </div>
                                     </div>
@@ -93,24 +95,21 @@ export function GamesTab({ games, players, onSelectGame, onAddGame }: GamesTabPr
 
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '48px' }}>
                                     {topBatter && topBatter.h > 0 && (
-                                        <div style={{ textAlign: 'right', display: 'none', md: 'block' } as any}>
-                                            <p style={{ fontSize: '0.625rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Top Performer</p>
-                                            <p style={{ fontSize: '0.875rem', fontWeight: '700' }}>
+                                        <div className="text-right" style={{ display: 'none' }}>
+                                            <p className="form-label" style={{ fontSize: '0.625rem' }}>Top Performer</p>
+                                            <p className="text-bold" style={{ fontSize: '0.875rem' }}>
                                                 {getPlayerName(topBatter.playerId)}
-                                                <span style={{ marginLeft: '8px', color: 'var(--accent-primary)', fontFamily: 'var(--font-mono)' }}>
+                                                <span className="text-mono" style={{ marginLeft: '8px', color: 'var(--accent-primary)' }}>
                                                     {topBatter.h}/{topBatter.ab}
                                                 </span>
                                             </p>
                                         </div>
                                     )}
 
-                                    <div style={{
+                                    <div className="text-mono text-bold text-right" style={{
                                         fontSize: '2rem',
-                                        fontWeight: '900',
-                                        fontFamily: 'var(--font-mono)',
                                         color: isWin ? 'var(--elite)' : isLoss ? 'var(--under)' : 'var(--text-primary)',
-                                        minWidth: '120px',
-                                        textAlign: 'right'
+                                        minWidth: '120px'
                                     }}>
                                         {game.teamScore} - {game.opponentScore}
                                     </div>

@@ -205,7 +205,7 @@ function App() {
 
     return (
       <div className="modal-overlay" onClick={() => { setModalType(null); setEditItem(null); }}>
-        <div className="modal-content" onClick={e => e.stopPropagation()}>
+        <div className="modal-container" onClick={e => e.stopPropagation()}>
           {modalType === 'tournament' && (
             <TournamentForm
               tournament={editItem as Tournament | undefined}
@@ -255,17 +255,17 @@ function App() {
           <div className="header-content">
             <div className="logo">
               <div className="logo-icon">🥎</div>
-              <div>
-                <h1>Softball Stats</h1>
-                <span>v1.0.0</span>
+              <div className="logo-text">
+                <h1>The Stats Machine</h1>
+                <span>v1.1.0</span>
               </div>
             </div>
           </div>
         </header>
         <main className="main-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div className="card" style={{ textAlign: 'center', maxWidth: '500px' }}>
-            <h2 style={{ marginBottom: 'var(--space-lg)' }}>Welcome to Softball Stats</h2>
-            <p style={{ color: 'var(--text-muted)', marginBottom: 'var(--space-lg)' }}>
+          <div className="card text-center" style={{ maxWidth: '500px', padding: 'var(--space-2xl)' }}>
+            <h2 className="mb-lg">Welcome to The Stats Machine</h2>
+            <p className="text-muted mb-xl">
               Create a tournament to start tracking your team's statistics.
             </p>
             <button className="btn btn-new" onClick={() => setModalType('tournament')}>
@@ -286,7 +286,7 @@ function App() {
             <div className="logo-icon">🥎</div>
             <div className="logo-text">
               <h1>The Stats Machine</h1>
-              <span>Professional Analytics</span>
+              <span>Professional Analytics • v1.1.0</span>
             </div>
           </div>
 
@@ -314,15 +314,13 @@ function App() {
             </button>
             {data.tournaments.length > 0 && (
               <select
+                className="form-control"
                 value={activeTournament?.id || ''}
                 onChange={e => setActiveTournament(data.tournaments.find(t => t.id === e.target.value) || null)}
                 style={{
                   padding: '8px 12px',
-                  background: 'var(--bg-primary)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: 'var(--radius-md)',
-                  color: 'var(--text-primary)',
-                  fontSize: '0.875rem',
+                  width: 'auto',
+                  minWidth: '180px',
                   fontWeight: '500'
                 }}
               >
@@ -332,7 +330,7 @@ function App() {
                 ))}
               </select>
             )}
-            <button className="btn btn-new" onClick={() => setModalType('tournament')} style={{ padding: '8px 16px' }}>
+            <button className="btn btn-primary" onClick={() => setModalType('tournament')} style={{ padding: '8px 16px' }}>
               + New
             </button>
           </div>
@@ -341,9 +339,7 @@ function App() {
 
       {/* Migration Banner */}
       {showMigrationBanner && (
-        <div style={{
-          background: 'var(--under)',
-          color: 'white',
+        <div className="banner danger" style={{
           padding: '12px 16px',
           textAlign: 'center',
           fontSize: '0.9rem',
@@ -356,14 +352,12 @@ function App() {
           <span>⚠️ Your data is currently stored in the unstable browser cache.</span>
           <button
             onClick={() => setModalType('storage')}
+            className="btn btn-primary"
             style={{
-              background: 'white',
-              color: 'var(--under)',
-              border: 'none',
               padding: '4px 12px',
-              borderRadius: 'var(--radius-sm)',
-              cursor: 'pointer',
-              fontWeight: '700'
+              fontSize: '0.75rem',
+              background: 'white',
+              color: 'var(--under)'
             }}
           >
             Move to Local File
@@ -380,9 +374,7 @@ function App() {
 
       {/* Mock data banner */}
       {useMockData && (
-        <div style={{
-          background: 'var(--accent-gradient)',
-          color: 'white',
+        <div className="banner info" style={{
           padding: '8px 16px',
           textAlign: 'center',
           fontSize: '0.875rem',
@@ -391,14 +383,16 @@ function App() {
           💡 Viewing demo data.
           <button
             onClick={loadMockData}
-            style={{ marginLeft: 'var(--space-md)', textDecoration: 'underline', background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontWeight: '700' }}
+            className="btn-link"
+            style={{ color: 'white', marginLeft: 'var(--space-md)' }}
           >
             Save as my data
           </button>
-          <span style={{ margin: '0 var(--space-sm)' }}>or</span>
+          <span style={{ margin: '0 var(--space-sm)', opacity: 0.8 }}>or</span>
           <button
             onClick={() => { setUseMockData(false); setModalType('tournament'); }}
-            style={{ textDecoration: 'underline', background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontWeight: '700' }}
+            className="btn-link"
+            style={{ color: 'white' }}
           >
             Start fresh
           </button>
@@ -424,7 +418,7 @@ function App() {
         {renderTab()}
       </main>
 
-      <button className="manual-btn" title="User Manual" style={{ position: 'fixed', bottom: '24px', right: '24px', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <button className="manual-btn" title="User Manual">
         <span>📖</span> Manual
       </button>
 

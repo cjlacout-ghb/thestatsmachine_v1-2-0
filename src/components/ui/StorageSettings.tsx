@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { storageManager, LocalStorageDriver, FileSystemDriver, loadData, saveData } from '../../lib/storage';
 
 interface StorageSettingsProps {
@@ -123,111 +123,106 @@ export function StorageSettings({ onStorageChange, onClose }: StorageSettingsPro
     };
 
     return (
-        <div className="card" style={{ minWidth: '400px' }}>
-            <h2 style={{ marginBottom: 'var(--space-md)' }}>Storage Location</h2>
-            <p style={{ color: 'var(--text-muted)', marginBottom: 'var(--space-lg)', fontSize: '0.9rem' }}>
-                Choose where you want to keep your data. Local files are more stable and persistent.
-            </p>
+        <div className="modal-content" style={{ minWidth: '450px' }}>
+            <div className="modal-header">
+                <h3>Storage Configuration</h3>
+                <p>Choose where you want to keep your data. Local files are more stable and persistent.</p>
+            </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
-                <div
-                    style={{
-                        padding: 'var(--space-md)',
-                        border: `2px solid ${driverType === 'local' ? 'var(--accent-primary)' : 'var(--border-color)'}`,
-                        borderRadius: 'var(--radius-md)',
-                        background: driverType === 'local' ? 'rgba(59, 130, 246, 0.05)' : 'transparent',
-                        cursor: 'default'
-                    }}
-                >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div>
-                            <h3 style={{ margin: 0, fontSize: '1rem' }}>Browser Cache</h3>
-                            <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>Data lives in your browser's private storage.</p>
-                        </div>
-                        {driverType === 'local' ? (
-                            <span style={{ color: 'var(--accent-primary)', fontWeight: 'bold', fontSize: '0.8rem' }}>ACTIVE</span>
-                        ) : (
-                            <button className="btn btn-secondary" style={{ padding: '4px 12px', fontSize: '0.8rem' }} onClick={switchToLocalStorage}>Switch</button>
-                        )}
-                    </div>
-                </div>
-
-                <div
-                    style={{
-                        padding: 'var(--space-md)',
-                        border: `2px solid ${driverType === 'file' ? 'var(--accent-primary)' : 'var(--border-color)'}`,
-                        borderRadius: 'var(--radius-md)',
-                        background: driverType === 'file' ? 'rgba(59, 130, 246, 0.05)' : 'transparent',
-                        opacity: isFileSystemApiSupported ? 1 : 0.6
-                    }}
-                >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div>
-                            <h3 style={{ margin: 0, fontSize: '1rem' }}>Local File (Sync)</h3>
-                            <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                                {isFileSystemApiSupported
-                                    ? 'Data is saved automatically to a file on your PC.'
-                                    : 'Not supported by your current browser.'}
-                            </p>
-                        </div>
-                        {driverType === 'file' ? (
-                            <div style={{ textAlign: 'right' }}>
-                                <span style={{ color: 'var(--accent-primary)', fontWeight: 'bold', fontSize: '0.8rem' }}>ACTIVE</span>
-                                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px' }}>Linked to system file</div>
+            <div className="modal-body">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+                    <div
+                        className={`card ${driverType === 'local' ? 'active' : ''}`}
+                        style={{
+                            padding: 'var(--space-lg)',
+                            border: driverType === 'local' ? '2px solid var(--accent-primary)' : '1px solid var(--border-color)',
+                            background: driverType === 'local' ? 'var(--bg-secondary)' : 'var(--bg-primary)'
+                        }}
+                    >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div>
+                                <h3 className="text-bold mb-xs" style={{ fontSize: '1rem' }}>🌐 Browser Cache</h3>
+                                <p className="text-muted" style={{ fontSize: '0.8125rem' }}>Data lives in your browser's private storage. Fast but volatile if cleared.</p>
                             </div>
-                        ) : (
-                            <div style={{ display: 'flex', gap: '8px' }}>
-                                <button
-                                    className="btn btn-secondary"
-                                    style={{ padding: '4px 12px', fontSize: '0.8rem' }}
-                                    onClick={switchToFileSystem}
-                                    disabled={!isFileSystemApiSupported}
-                                >
-                                    Create New
-                                </button>
-                                <button
-                                    className="btn btn-secondary"
-                                    style={{ padding: '4px 12px', fontSize: '0.8rem' }}
-                                    onClick={linkExistingFile}
-                                    disabled={!isFileSystemApiSupported}
-                                >
-                                    Open Existing
-                                </button>
-                            </div>
-                        )}
+                            {driverType === 'local' ? (
+                                <span className="text-accent text-bold" style={{ fontSize: '0.75rem' }}>ACTIVE</span>
+                            ) : (
+                                <button className="btn btn-secondary btn-sm" onClick={switchToLocalStorage}>Switch</button>
+                            )}
+                        </div>
                     </div>
-                </div>
 
-                <div
-                    style={{
-                        padding: 'var(--space-md)',
-                        border: '1px dashed var(--border-color)',
-                        borderRadius: 'var(--radius-md)',
-                        marginTop: 'var(--space-sm)'
-                    }}
-                >
-                    <h3 style={{ margin: 0, fontSize: '0.9rem', marginBottom: '8px' }}>Manual Backup (All Browsers)</h3>
-                    <div style={{ display: 'flex', gap: '12px' }}>
-                        <button
-                            className="btn btn-secondary"
-                            style={{ flex: 1, padding: '8px', fontSize: '0.75rem', display: 'flex', gap: '4px' }}
-                            onClick={handleManualExport}
-                        >
-                            📤 Export Backup
-                        </button>
-                        <button
-                            className="btn btn-secondary"
-                            style={{ flex: 1, padding: '8px', fontSize: '0.75rem', display: 'flex', gap: '4px' }}
-                            onClick={handleManualImport}
-                        >
-                            📥 Import Backup
-                        </button>
+                    <div
+                        className={`card ${driverType === 'file' ? 'active' : ''}`}
+                        style={{
+                            padding: 'var(--space-lg)',
+                            border: driverType === 'file' ? '2px solid var(--accent-primary)' : '1px solid var(--border-color)',
+                            background: driverType === 'file' ? 'var(--bg-secondary)' : 'var(--bg-primary)',
+                            opacity: isFileSystemApiSupported ? 1 : 0.6
+                        }}
+                    >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ flex: 1 }}>
+                                <h3 className="text-bold mb-xs" style={{ fontSize: '1rem' }}>💾 Local File (Sync)</h3>
+                                <p className="text-muted" style={{ fontSize: '0.8125rem' }}>
+                                    {isFileSystemApiSupported
+                                        ? 'Data is saved automatically to a file on your device. Stable & Persistent.'
+                                        : 'Not supported by your current browser.'}
+                                </p>
+                            </div>
+                            {driverType === 'file' ? (
+                                <div className="text-right">
+                                    <span className="text-accent text-bold" style={{ fontSize: '0.75rem' }}>ACTIVE</span>
+                                    <div className="text-muted" style={{ fontSize: '0.625rem', marginTop: '4px' }}>Linked to system file</div>
+                                </div>
+                            ) : (
+                                <div style={{ display: 'flex', gap: 'var(--space-xs)' }}>
+                                    <button
+                                        className="btn btn-secondary btn-sm"
+                                        onClick={switchToFileSystem}
+                                        disabled={!isFileSystemApiSupported}
+                                    >
+                                        Create New
+                                    </button>
+                                    <button
+                                        className="btn btn-secondary btn-sm"
+                                        onClick={linkExistingFile}
+                                        disabled={!isFileSystemApiSupported}
+                                    >
+                                        Open
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="card" style={{ padding: 'var(--space-lg)', borderStyle: 'dashed' }}>
+                        <h4 className="text-bold mb-md" style={{ fontSize: '0.9rem' }}>Manual Management</h4>
+                        <div style={{ display: 'flex', gap: 'var(--space-md)' }}>
+                            <button
+                                className="btn btn-secondary btn-sm"
+                                style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                                onClick={handleManualExport}
+                            >
+                                📤 Export Backup
+                            </button>
+                            <button
+                                className="btn btn-secondary btn-sm"
+                                style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                                onClick={handleManualImport}
+                            >
+                                📥 Import Backup
+                            </button>
+                        </div>
+                        <p className="text-muted mt-sm" style={{ fontSize: '0.7rem' }}>
+                            Export a .json file to move your data between devices or browsers manually.
+                        </p>
                     </div>
                 </div>
             </div>
 
-            <div style={{ marginTop: 'var(--space-xl)', display: 'flex', justifyContent: 'flex-end' }}>
-                <button className="btn btn-secondary" onClick={onClose}>Close</button>
+            <div className="modal-footer">
+                <button className="btn btn-primary" style={{ width: '100%' }} onClick={onClose}>Finish Configuration</button>
             </div>
         </div>
     );

@@ -69,24 +69,24 @@ export function TeamTab({ games, players: _players, teamName = 'My Team', onAddG
                     <span className="label">Record</span>
                     <span className="value">{wins} - {losses}</span>
                     <div className="trend" style={{ color: 'var(--accent-primary)' }}>
-                        <span>+2 Wins Streak</span>
+                        <span className="text-bold">+2 Wins Streak</span>
                     </div>
                 </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 'var(--space-xl)' }}>
+            <div className="grid-sidebar">
                 {/* Trend Section */}
-                <div className="card" style={{ padding: '32px' }}>
-                    <div className="card-header" style={{ marginBottom: '48px' }}>
+                <div className="card" style={{ padding: 'var(--space-xl)' }}>
+                    <div className="card-header" style={{ marginBottom: 'var(--space-2xl)' }}>
                         <div>
                             <h3 className="card-title">{teamName} - Batting Average Trend</h3>
-                            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                                <span style={{ color: 'var(--elite)', fontWeight: '700' }}>+4.2%</span> vs last month
+                            <p className="card-subtitle">
+                                <span className="text-bold" style={{ color: 'var(--elite)' }}>+4.2%</span> vs last month
                             </p>
                         </div>
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                            <button className="btn btn-secondary" style={{ padding: '4px 12px', fontSize: '0.75rem' }}>Last 10 Games</button>
-                            <button className="btn btn-secondary" style={{ padding: '4px 12px', fontSize: '0.75rem', borderColor: 'transparent', color: 'var(--text-muted)' }}>All Season</button>
+                        <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+                            <button className="btn btn-secondary btn-sm">Last 10 Games</button>
+                            <button className="btn btn-ghost btn-sm text-muted">All Season</button>
                         </div>
                     </div>
 
@@ -116,8 +116,17 @@ export function TeamTab({ games, players: _players, teamName = 'My Team', onAddG
                             <circle cx="600" cy="140" r="6" fill="white" stroke="var(--accent-primary)" strokeWidth="3" />
                             <circle cx="800" cy="100" r="6" fill="var(--accent-primary)" stroke="white" strokeWidth="2" />
                         </svg>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '16px', color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: '600' }}>
-                            <span>G1</span><span>G2</span><span>G3</span><span>G4</span><span>G5</span><span>G6</span><span>G7</span><span>G8</span><span>G9</span><span>G10</span>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 'var(--space-md)' }} className="text-muted text-mono text-bold">
+                            <span style={{ fontSize: '0.7rem' }}>G1</span>
+                            <span style={{ fontSize: '0.7rem' }}>G2</span>
+                            <span style={{ fontSize: '0.7rem' }}>G3</span>
+                            <span style={{ fontSize: '0.7rem' }}>G4</span>
+                            <span style={{ fontSize: '0.7rem' }}>G5</span>
+                            <span style={{ fontSize: '0.7rem' }}>G6</span>
+                            <span style={{ fontSize: '0.7rem' }}>G7</span>
+                            <span style={{ fontSize: '0.7rem' }}>G8</span>
+                            <span style={{ fontSize: '0.7rem' }}>G9</span>
+                            <span style={{ fontSize: '0.7rem' }}>G10</span>
                         </div>
                     </div>
                 </div>
@@ -125,27 +134,27 @@ export function TeamTab({ games, players: _players, teamName = 'My Team', onAddG
                 {/* Quick Actions / Active Roster */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xl)' }}>
                     <div className="card">
-                        <h3 className="card-title" style={{ marginBottom: '20px' }}>Quick Actions</h3>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                            <div className="player-card" onClick={onAddGame} style={{ padding: '16px', flexDirection: 'row', textAlign: 'left', cursor: 'pointer', borderStyle: 'dashed' }}>
-                                <div className="logo-icon" style={{ borderRadius: '50%', width: '40px', height: '40px', fontSize: '16px', background: 'var(--purple)', boxShadow: 'none' }}>+</div>
+                        <h3 className="card-title mb-lg">Quick Actions</h3>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
+                            <div className="player-card" onClick={onAddGame} style={{ padding: 'var(--space-md)', flexDirection: 'row', textAlign: 'left', cursor: 'pointer', borderStyle: 'dashed' }}>
+                                <div className="logo-icon" style={{ borderRadius: '50%', width: '40px', height: '40px', fontSize: '16px', background: 'var(--brand-blue)', boxShadow: 'none' }}>+</div>
                                 <div>
-                                    <p style={{ fontWeight: '700', fontSize: '0.875rem' }}>Log New Game</p>
-                                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Record play-by-play data</p>
+                                    <p className="text-bold" style={{ fontSize: '0.875rem' }}>Log New Game</p>
+                                    <p className="text-muted" style={{ fontSize: '0.75rem' }}>Record play-by-play data</p>
                                 </div>
                             </div>
-                            <div className="player-card" onClick={onAddPlayer} style={{ padding: '16px', flexDirection: 'row', textAlign: 'left', cursor: 'pointer' }}>
-                                <div className="logo-icon" style={{ borderRadius: '50%', width: '40px', height: '40px', fontSize: '16px', background: 'var(--purple-soft)', color: 'var(--purple)', boxShadow: 'none' }}>🏃</div>
+                            <div className="player-card" onClick={onAddPlayer} style={{ padding: 'var(--space-md)', flexDirection: 'row', textAlign: 'left', cursor: 'pointer' }}>
+                                <div className="logo-icon" style={{ borderRadius: '50%', width: '40px', height: '40px', fontSize: '16px', background: 'var(--brand-blue-soft)', color: 'var(--brand-blue)', boxShadow: 'none' }}>🏃</div>
                                 <div>
-                                    <p style={{ fontWeight: '700', fontSize: '0.875rem' }}>Add New Athlete</p>
-                                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Add player to roster</p>
+                                    <p className="text-bold" style={{ fontSize: '0.875rem' }}>Add New Athlete</p>
+                                    <p className="text-muted" style={{ fontSize: '0.75rem' }}>Add player to roster</p>
                                 </div>
                             </div>
-                            <div className="player-card" onClick={onManageRoster} style={{ padding: '16px', flexDirection: 'row', textAlign: 'left', cursor: 'pointer' }}>
+                            <div className="player-card" onClick={onManageRoster} style={{ padding: 'var(--space-md)', flexDirection: 'row', textAlign: 'left', cursor: 'pointer' }}>
                                 <div className="logo-icon" style={{ borderRadius: '50%', width: '40px', height: '40px', fontSize: '16px', background: 'var(--accent-soft)', color: 'var(--accent-primary)', boxShadow: 'none' }}>👥</div>
                                 <div>
-                                    <p style={{ fontWeight: '700', fontSize: '0.875rem' }}>Roster Management</p>
-                                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Edit player details</p>
+                                    <p className="text-bold" style={{ fontSize: '0.875rem' }}>Roster Management</p>
+                                    <p className="text-muted" style={{ fontSize: '0.75rem' }}>Edit player details</p>
                                 </div>
                             </div>
                         </div>
@@ -154,22 +163,22 @@ export function TeamTab({ games, players: _players, teamName = 'My Team', onAddG
                     <div className="card" style={{ flex: 1 }}>
                         <div className="card-header">
                             <h3 className="card-title">Recent Leaders</h3>
-                            <button className="btn btn-ghost" style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--accent-primary)' }}>View All</button>
+                            <button className="btn btn-ghost btn-sm text-bold text-accent">View All</button>
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
                             {games[0]?.playerStats.slice(0, 3).map((ps, i) => {
-                                const p = _players.find(p => p.id === ps.playerId);
+                                const p = _players.find(player => player.id === ps.playerId);
                                 return (
-                                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                        <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--accent-soft)', color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '0.75rem' }}>
+                                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
+                                        <div className="player-avatar" style={{ width: '36px', height: '36px', background: 'var(--accent-soft)', color: 'var(--accent-primary)', fontWeight: '800', fontSize: '0.75rem' }}>
                                             {p?.name.split(' ').map(n => n[0]).join('')}
                                         </div>
                                         <div style={{ flex: 1 }}>
-                                            <p style={{ fontSize: '0.875rem', fontWeight: '600' }}>{p?.name}</p>
-                                            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{p?.primaryPosition} • #{p?.jerseyNumber}</p>
+                                            <p className="text-bold" style={{ fontSize: '0.875rem' }}>{p?.name}</p>
+                                            <p className="text-muted" style={{ fontSize: '0.75rem' }}>{p?.primaryPosition} • #{p?.jerseyNumber}</p>
                                         </div>
-                                        <div style={{ textAlign: 'right' }}>
-                                            <p style={{ fontSize: '0.9375rem', fontWeight: '800', fontFamily: 'var(--font-mono)' }}>{formatAvg(ps.h / (ps.ab || 1))}</p>
+                                        <div className="text-center">
+                                            <p className="text-mono text-bold" style={{ fontSize: '0.9375rem' }}>{formatAvg(ps.h / (ps.ab || 1))}</p>
                                         </div>
                                     </div>
                                 );
@@ -180,10 +189,10 @@ export function TeamTab({ games, players: _players, teamName = 'My Team', onAddG
             </div>
 
             {/* Comprehensive Detail Panels */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: 'var(--space-xl)' }}>
+            <div className="grid-3">
                 <div className="card">
-                    <h3 className="card-title" style={{ marginBottom: '20px', borderBottom: '1px solid var(--border-light)', paddingBottom: '12px' }}>Team Batting</h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <h3 className="card-title mb-lg" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '12px' }}>Team Batting</h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
                         {[
                             { label: 'AVG', val: formatAvg(batting.avg), lvl: getAvgLevel(batting.avg) },
                             { label: 'OBP', val: formatPct(batting.obp), lvl: getOBPLevel(batting.obp) },
@@ -191,15 +200,15 @@ export function TeamTab({ games, players: _players, teamName = 'My Team', onAddG
                             { label: 'OPS', val: formatPct(batting.ops), lvl: getOPSLevel(batting.ops) }
                         ].map(s => (
                             <div key={s.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ fontWeight: '500', color: 'var(--text-secondary)' }}>{s.label}</span>
+                                <span className="text-bold text-secondary">{s.label}</span>
                                 <span className={`stat-value ${s.lvl}`}>{s.val}</span>
                             </div>
                         ))}
                     </div>
                 </div>
                 <div className="card">
-                    <h3 className="card-title" style={{ marginBottom: '20px', borderBottom: '1px solid var(--border-light)', paddingBottom: '12px' }}>Team Pitching</h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <h3 className="card-title mb-lg" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '12px' }}>Team Pitching</h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
                         {[
                             { label: 'ERA', val: formatERA(pitching.era), lvl: getERALevel(pitching.era) },
                             { label: 'WHIP', val: pitching.whip.toFixed(2), lvl: '' },
@@ -207,21 +216,21 @@ export function TeamTab({ games, players: _players, teamName = 'My Team', onAddG
                             { label: 'OBA', val: formatPct(pitching.oba), lvl: '' }
                         ].map(s => (
                             <div key={s.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ fontWeight: '500', color: 'var(--text-secondary)' }}>{s.label}</span>
+                                <span className="text-bold text-secondary">{s.label}</span>
                                 <span className={`stat-value ${s.lvl}`}>{s.val}</span>
                             </div>
                         ))}
                     </div>
                 </div>
                 <div className="card">
-                    <h3 className="card-title" style={{ marginBottom: '20px', borderBottom: '1px solid var(--border-light)', paddingBottom: '12px' }}>Team Fielding</h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <h3 className="card-title mb-lg" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '12px' }}>Team Fielding</h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
                         {[
                             { label: 'FLD%', val: formatPct(fielding.fldPct), lvl: getFldLevel(fielding.fldPct) },
                             { label: 'CS%', val: fielding.csPct > 0 ? formatPct(fielding.csPct) : '—', lvl: '' }
-                        ].map(s => (
+                        ].map(s => (s.val !== '—' || s.label === 'FLD%') && (
                             <div key={s.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ fontWeight: '500', color: 'var(--text-secondary)' }}>{s.label}</span>
+                                <span className="text-bold text-secondary">{s.label}</span>
                                 <span className={`stat-value ${s.lvl}`}>{s.val}</span>
                             </div>
                         ))}

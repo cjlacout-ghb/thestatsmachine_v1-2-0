@@ -42,12 +42,10 @@ export function PlayersTab({ players, games, onSelectPlayer, onAddPlayer }: Play
                     const stats = getPlayerStats(p.id);
                     return (
                         <div key={p.id} className="player-card" onClick={() => onSelectPlayer?.(p)} style={{ cursor: 'pointer' }}>
-                            <div className="player-avatar">
-                                <div style={{ width: '100%', height: '100%', background: 'var(--accent-gradient)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '2rem', fontWeight: '800' }}>
-                                    {p.name.split(' ').map(n => n[0]).join('')}
-                                </div>
+                            <div className="player-avatar" style={{ fontSize: '2rem', background: 'var(--accent-gradient)', color: 'white' }}>
+                                {p.name.split(' ').map(n => n[0]).join('')}
                             </div>
-                            <h3>{p.name} #{p.jerseyNumber}</h3>
+                            <h3 className="text-bold">{p.name} #{p.jerseyNumber}</h3>
                             <span className="player-info-pill">{p.primaryPosition}</span>
 
                             <div className="player-stats-row">
@@ -71,22 +69,22 @@ export function PlayersTab({ players, games, onSelectPlayer, onAddPlayer }: Play
 
             {/* Statistics Table */}
             <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-                <div className="card-header" style={{ padding: '24px 32px', marginBottom: 0 }}>
+                <div className="card-header" style={{ padding: 'var(--space-lg) var(--space-xl)', marginBottom: 0 }}>
                     <h3 className="card-title">Full Team Statistics</h3>
                 </div>
                 <div style={{ overflowX: 'auto' }}>
                     <table className="stat-table">
                         <thead>
                             <tr>
-                                <th>Player</th>
+                                <th style={{ paddingLeft: 'var(--space-xl)' }}>Player</th>
                                 <th>Pos</th>
                                 <th>G</th>
                                 <th>AB</th>
-                                <th style={{ color: 'var(--accent-primary)' }}>AVG</th>
+                                <th className="text-accent">AVG</th>
                                 <th>OBP</th>
                                 <th>SLG</th>
                                 <th>OPS</th>
-                                <th>Actions</th>
+                                <th className="text-right" style={{ paddingRight: 'var(--space-xl)' }}>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -97,24 +95,26 @@ export function PlayersTab({ players, games, onSelectPlayer, onAddPlayer }: Play
 
                                 return (
                                     <tr key={p.id}>
-                                        <td style={{ fontWeight: '600' }}>{p.name}</td>
+                                        <td className="text-bold" style={{ paddingLeft: 'var(--space-xl)' }}>{p.name}</td>
                                         <td><span className="player-info-pill" style={{ fontSize: '0.65rem' }}>{p.primaryPosition}</span></td>
-                                        <td>{gCount}</td>
-                                        <td>{ab}</td>
+                                        <td className="text-mono">{gCount}</td>
+                                        <td className="text-mono">{ab}</td>
                                         <td><span className={`stat-value ${getAvgLevel(stats?.avg || 0)}`}>{stats ? formatAvg(stats.avg) : '.000'}</span></td>
-                                        <td>{stats ? formatAvg(stats.obp) : '.000'}</td>
-                                        <td>{stats ? formatAvg(stats.slg) : '.000'}</td>
-                                        <td>{stats ? formatAvg(stats.ops) : '.000'}</td>
-                                        <td style={{ color: 'var(--text-muted)', cursor: 'pointer' }} onClick={() => onSelectPlayer?.(p)}>•••</td>
+                                        <td className="text-mono">{stats ? formatAvg(stats.obp) : '.000'}</td>
+                                        <td className="text-mono">{stats ? formatAvg(stats.slg) : '.000'}</td>
+                                        <td className="text-mono">{stats ? formatAvg(stats.ops) : '.000'}</td>
+                                        <td className="text-right" style={{ paddingRight: 'var(--space-xl)' }}>
+                                            <button className="btn btn-ghost" style={{ padding: '4px 8px' }} onClick={() => onSelectPlayer?.(p)}>•••</button>
+                                        </td>
                                     </tr>
                                 );
                             })}
                         </tbody>
                     </table>
                 </div>
-                <div style={{ padding: '16px 32px', borderTop: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Showing {players.length} players from roster</span>
-                    <div style={{ display: 'flex', gap: '8px' }}>
+                <div className="modal-footer" style={{ borderTop: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'var(--space-md) var(--space-xl)' }}>
+                    <span className="text-muted" style={{ fontSize: '0.75rem' }}>Showing {players.length} players from roster</span>
+                    <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
                         <button className="btn btn-secondary" style={{ padding: '4px 12px', fontSize: '0.75rem' }}>Prev</button>
                         <button className="btn btn-secondary" style={{ padding: '4px 12px', fontSize: '0.75rem' }}>Next</button>
                     </div>

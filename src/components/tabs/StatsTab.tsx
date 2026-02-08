@@ -38,7 +38,7 @@ export function StatsTab({ games, players, onAddGame, onAddPlayer }: StatsTabPro
                 title="No Statistics Available"
                 message="Add players and games to see detailed statistics."
                 action={
-                    <div style={{ display: 'flex', gap: '12px' }}>
+                    <div style={{ display: 'flex', gap: 'var(--space-md)' }}>
                         <button className="btn btn-new" onClick={onAddPlayer}>
                             + Add Player
                         </button>
@@ -106,42 +106,42 @@ export function StatsTab({ games, players, onAddGame, onAddPlayer }: StatsTabPro
             key: 'obp',
             label: 'OBP',
             sortable: true,
-            render: (row: PlayerBattingRow) => formatAvg(row.obp)
+            render: (row: PlayerBattingRow) => <span className="text-mono">{formatAvg(row.obp)}</span>
         },
         {
             key: 'slg',
             label: 'SLG',
             sortable: true,
-            render: (row: PlayerBattingRow) => formatAvg(row.slg)
+            render: (row: PlayerBattingRow) => <span className="text-mono">{formatAvg(row.slg)}</span>
         },
         {
             key: 'ops',
             label: 'OPS',
             sortable: true,
-            render: (row: PlayerBattingRow) => <span style={{ fontWeight: 800 }}>{formatAvg(row.ops)}</span>
+            render: (row: PlayerBattingRow) => <span className="text-mono text-bold">{formatAvg(row.ops)}</span>
         },
     ];
 
     return (
         <div className="dash-content">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-lg)' }}>
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    <button className="btn btn-primary" style={{ padding: '8px 16px', borderRadius: '20px' }}>All Positions ▾</button>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-lg)', gap: 'var(--space-md)', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
+                    <button className="btn btn-secondary" style={{ padding: '8px 16px', borderRadius: '20px' }}>All Positions ▾</button>
                     <button className="btn btn-secondary" style={{ padding: '8px 16px', borderRadius: '20px' }}>League Games ▾</button>
                     <button className="btn btn-secondary" style={{ padding: '8px 16px', borderRadius: '20px' }}>Tournaments ▾</button>
                     <button className="btn btn-secondary" style={{ padding: '8px 16px', borderRadius: '20px' }}>Last 10 Games ▾</button>
                 </div>
-                <div style={{ display: 'flex', gap: '12px' }}>
-                    <button className="btn btn-secondary">
+                <div style={{ display: 'flex', gap: 'var(--space-md)' }}>
+                    <button className="btn btn-ghost">
                         <span style={{ fontSize: '1.1rem' }}>☊</span> Advanced Filters
                     </button>
-                    <button className="btn btn-new" onClick={onAddGame}>
+                    <button className="btn btn-primary" onClick={onAddGame}>
                         <span style={{ fontSize: '1.1rem' }}>+</span> Add Game Data
                     </button>
                 </div>
             </div>
 
-            <div className="stat-table-wrapper">
+            <div className="stat-table-wrapper card" style={{ padding: 0, overflow: 'hidden' }}>
                 <StatTable
                     data={battingData}
                     columns={columns}
@@ -149,16 +149,25 @@ export function StatsTab({ games, players, onAddGame, onAddPlayer }: StatsTabPro
                 />
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'var(--space-lg)' }}>
-                <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: '500' }}>
-                    Showing <strong>{battingData.length}</strong> players from roster
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'var(--space-xl)' }}>
+                <div className="text-muted" style={{ fontSize: '0.8125rem', fontWeight: '500' }}>
+                    Showing <strong className="text-primary">{battingData.length}</strong> players from roster
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)' }}>LEGEND:</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-lg)' }}>
+                    <span className="text-bold text-muted" style={{ fontSize: '0.75rem', textTransform: 'uppercase' }}>Legend:</span>
                     <div style={{ display: 'flex', gap: '16px', fontSize: '0.7rem', fontWeight: '800', textTransform: 'uppercase' }}>
-                        <span style={{ color: 'var(--elite)' }}>● Elite</span>
-                        <span style={{ color: 'var(--avg)' }}>● Avg</span>
-                        <span style={{ color: 'var(--under)' }}>● Under</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--elite)' }}></div>
+                            <span style={{ color: 'var(--elite)' }}>Elite</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--avg)' }}></div>
+                            <span style={{ color: 'var(--avg)' }}>Avg</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--under)' }}></div>
+                            <span style={{ color: 'var(--under)' }}>Under</span>
+                        </div>
                     </div>
                 </div>
             </div>

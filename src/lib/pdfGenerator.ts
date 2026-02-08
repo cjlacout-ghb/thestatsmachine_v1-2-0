@@ -9,7 +9,7 @@ export function exportTournamentReport(
     games: Game[]
 ): void {
     const doc = new jsPDF();
-    const title = `Softball Stats Report: ${tournament.name}`;
+    const title = `The Stats Machine Report: ${tournament.name}`;
     const date = new Date().toLocaleDateString();
 
     // Header
@@ -170,5 +170,5 @@ export function exportTournamentReport(
     }
 
     // Save the PDF
-    doc.save(`softball_stats_${tournament.name.replace(/\s+/g, '_').toLowerCase()}.pdf`);
+    doc.save(`stats_machine_${tournament.name.replace(/\s+/g, '_').toLowerCase()}.pdf`);
 }

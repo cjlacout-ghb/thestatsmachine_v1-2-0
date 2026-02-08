@@ -59,9 +59,16 @@ export function StatTable<T>({
                                 key={String(col.key)}
                                 onClick={() => col.sortable !== false && handleSort(col.key)}
                                 className={sortKey === col.key ? 'sorted' : ''}
+                                style={{ cursor: col.sortable !== false ? 'pointer' : 'default' }}
                             >
-                                {col.label}
-                                {sortKey === col.key && (sortDir === 'asc' ? ' ↑' : ' ↓')}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    {col.label}
+                                    {col.sortable !== false && (
+                                        <span style={{ fontSize: '0.6rem', opacity: sortKey === col.key ? 1 : 0.3 }}>
+                                            {sortKey === col.key ? (sortDir === 'asc' ? '▲' : '▼') : '↕'}
+                                        </span>
+                                    )}
+                                </div>
                             </th>
                         ))}
                     </tr>
