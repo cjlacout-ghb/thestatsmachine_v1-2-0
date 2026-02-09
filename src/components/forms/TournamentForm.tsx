@@ -4,11 +4,12 @@ import { generateId } from '../../lib/storage';
 
 interface TournamentFormProps {
     tournament?: Tournament;
+    teamId: string;
     onSave: (tournament: Tournament) => void;
     onCancel: () => void;
 }
 
-export function TournamentForm({ tournament, onSave, onCancel }: TournamentFormProps) {
+export function TournamentForm({ tournament, teamId, onSave, onCancel }: TournamentFormProps) {
     const [name, setName] = useState(tournament?.name || '');
     const [startDate, setStartDate] = useState(tournament?.startDate || '');
     const [endDate, setEndDate] = useState(tournament?.endDate || '');
@@ -33,6 +34,7 @@ export function TournamentForm({ tournament, onSave, onCancel }: TournamentFormP
 
         onSave({
             id: tournament?.id || generateId(),
+            teamId,
             name: name.trim(),
             startDate,
             endDate,

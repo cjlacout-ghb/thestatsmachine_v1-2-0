@@ -2,8 +2,15 @@
 
 export type Position = 'P' | 'C' | '1B' | '2B' | '3B' | 'SS' | 'LF' | 'CF' | 'RF' | 'DP' | 'FLEX';
 
+export interface Team {
+    id: string;
+    name: string;
+    description?: string;
+}
+
 export interface Tournament {
     id: string;
+    teamId: string; // Linked to a team
     name: string;
     startDate: string;
     endDate?: string;
@@ -12,11 +19,11 @@ export interface Tournament {
 
 export interface Player {
     id: string;
+    teamId: string; // Linked to a team
     name: string;
     jerseyNumber: string;
     primaryPosition: Position;
     secondaryPositions: Position[];
-    tournamentId: string;
 }
 
 export interface Game {
@@ -103,7 +110,10 @@ export type PerformanceLevel = 'good' | 'average' | 'poor';
 
 // App state
 export interface AppData {
+    teams: Team[];
     tournaments: Tournament[];
     players: Player[];
     games: Game[];
 }
+
+export type TabId = 'players' | 'tournaments' | 'team' | 'games' | 'stats';

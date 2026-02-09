@@ -6,13 +6,14 @@ const POSITIONS: Position[] = ['P', 'C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF
 
 interface PlayerFormProps {
     player?: Player;
-    tournamentId: string;
+    teamId: string;
     onSave: (player: Player) => void;
     onCancel: () => void;
     onBulkImport?: (players: Player[]) => void;
+    onDelete?: () => void;
 }
 
-export function PlayerForm({ player, tournamentId, onSave, onCancel, onBulkImport }: PlayerFormProps) {
+export function PlayerForm({ player, teamId, onSave, onCancel, onBulkImport, onDelete }: PlayerFormProps) {
     const [name, setName] = useState(player?.name || '');
     const [jerseyNumber, setJerseyNumber] = useState(player?.jerseyNumber || '');
     const [primaryPosition, setPrimaryPosition] = useState<Position>(player?.primaryPosition || 'DP');
@@ -40,7 +41,7 @@ export function PlayerForm({ player, tournamentId, onSave, onCancel, onBulkImpor
             jerseyNumber: jerseyNumber.trim(),
             primaryPosition,
             secondaryPositions,
-            tournamentId
+            teamId,
         });
     };
 
@@ -66,7 +67,7 @@ export function PlayerForm({ player, tournamentId, onSave, onCancel, onBulkImpor
     };
 
     const handleImport = () => {
-        const players = parsePlayerImport(importText, tournamentId);
+        const players = parsePlayerImport(importText, teamId);
         if (players.length > 0 && onBulkImport) {
             onBulkImport(players);
             setShowImport(false);
@@ -123,7 +124,7 @@ export function PlayerForm({ player, tournamentId, onSave, onCancel, onBulkImpor
                         disabled={!importText.trim()}
                         style={{ flex: 2 }}
                     >
-                        Import {importText ? parsePlayerImport(importText, tournamentId).length : ''} Players
+                        Import {importText ? parsePlayerImport(importText, teamId).length : ''} Players
                     </button>
                 </div>
             </div>
@@ -221,6 +222,11 @@ export function PlayerForm({ player, tournamentId, onSave, onCancel, onBulkImpor
                 </div>
 
                 <div className="modal-footer">
+                    {player && (
+                        <button type="button" className="btn btn-danger" onClick={onDelete} style={{ marginRight: 'auto' }}>
+                            🗑 Delete
+                        </button>
+                    )}
                     <button type="button" className="btn btn-secondary" onClick={onCancel} style={{ flex: 1 }}>
                         Discard
                     </button>

@@ -1,7 +1,14 @@
-import type { Tournament, Player, Game } from '../types';
+import type { Team, Tournament, Player, Game } from '../types';
+
+export const mockTeam: Team = {
+    id: 'team1',
+    name: 'Red Dragons Softball',
+    description: 'Premier regional softball club'
+};
 
 export const mockTournament: Tournament = {
     id: 't1',
+    teamId: 'team1',
     name: 'Spring Championship 2026',
     startDate: '2026-03-01',
     endDate: '2026-03-15',
@@ -9,16 +16,16 @@ export const mockTournament: Tournament = {
 };
 
 export const mockPlayers: Player[] = [
-    { id: 'p1', name: 'Sofia Martinez', jerseyNumber: '7', primaryPosition: 'SS', secondaryPositions: ['2B'], tournamentId: 't1' },
-    { id: 'p2', name: 'Emma Rodriguez', jerseyNumber: '22', primaryPosition: 'P', secondaryPositions: ['1B'], tournamentId: 't1' },
-    { id: 'p3', name: 'Isabella Chen', jerseyNumber: '3', primaryPosition: 'C', secondaryPositions: [], tournamentId: 't1' },
-    { id: 'p4', name: 'Mia Thompson', jerseyNumber: '14', primaryPosition: '1B', secondaryPositions: ['LF'], tournamentId: 't1' },
-    { id: 'p5', name: 'Olivia Davis', jerseyNumber: '9', primaryPosition: 'CF', secondaryPositions: ['RF'], tournamentId: 't1' },
-    { id: 'p6', name: 'Ava Wilson', jerseyNumber: '11', primaryPosition: '3B', secondaryPositions: [], tournamentId: 't1' },
-    { id: 'p7', name: 'Charlotte Brown', jerseyNumber: '5', primaryPosition: '2B', secondaryPositions: ['SS'], tournamentId: 't1' },
-    { id: 'p8', name: 'Amelia Garcia', jerseyNumber: '21', primaryPosition: 'LF', secondaryPositions: ['CF'], tournamentId: 't1' },
-    { id: 'p9', name: 'Harper Lee', jerseyNumber: '33', primaryPosition: 'RF', secondaryPositions: [], tournamentId: 't1' },
-    { id: 'p10', name: 'Evelyn White', jerseyNumber: '8', primaryPosition: 'DP', secondaryPositions: ['P'], tournamentId: 't1' }
+    { id: 'p1', name: 'Sofia Martinez', jerseyNumber: '7', primaryPosition: 'SS', secondaryPositions: ['2B'], teamId: 'team1' },
+    { id: 'p2', name: 'Emma Rodriguez', jerseyNumber: '22', primaryPosition: 'P', secondaryPositions: ['1B'], teamId: 'team1' },
+    { id: 'p3', name: 'Isabella Chen', jerseyNumber: '3', primaryPosition: 'C', secondaryPositions: [], teamId: 'team1' },
+    { id: 'p4', name: 'Mia Thompson', jerseyNumber: '14', primaryPosition: '1B', secondaryPositions: ['LF'], teamId: 'team1' },
+    { id: 'p5', name: 'Olivia Davis', jerseyNumber: '9', primaryPosition: 'CF', secondaryPositions: ['RF'], teamId: 'team1' },
+    { id: 'p6', name: 'Ava Wilson', jerseyNumber: '11', primaryPosition: '3B', secondaryPositions: [], teamId: 'team1' },
+    { id: 'p7', name: 'Charlotte Brown', jerseyNumber: '5', primaryPosition: '2B', secondaryPositions: ['SS'], teamId: 'team1' },
+    { id: 'p8', name: 'Amelia Garcia', jerseyNumber: '21', primaryPosition: 'LF', secondaryPositions: ['CF'], teamId: 'team1' },
+    { id: 'p9', name: 'Harper Lee', jerseyNumber: '33', primaryPosition: 'RF', secondaryPositions: [], teamId: 'team1' },
+    { id: 'p10', name: 'Evelyn White', jerseyNumber: '8', primaryPosition: 'DP', secondaryPositions: ['P'], teamId: 'team1' }
 ];
 
 export const mockGames: Game[] = [

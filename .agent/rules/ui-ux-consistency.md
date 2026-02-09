@@ -1,4 +1,8 @@
 ---
+trigger: always_on
+---
+
+---
 description: Ensure complete UI/UX consistency across the entire application.
 ---
 # UI/UX Consistency Rule

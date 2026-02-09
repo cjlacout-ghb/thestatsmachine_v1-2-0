@@ -1,8 +1,9 @@
-import type { AppData, Tournament, Player, Game } from '../types';
+import type { AppData, Team, Tournament, Player, Game } from '../types';
 
 const STORAGE_KEY = 'softball_stats_data';
 
 const DEFAULT_DATA: AppData = {
+    teams: [],
     tournaments: [],
     players: [],
     games: []
@@ -33,7 +34,34 @@ export class LocalStorageDriver implements StorageDriver {
         try {
             const stored = localStorage.getItem(STORAGE_KEY);
             if (!stored) return DEFAULT_DATA;
-            return JSON.parse(stored);
+            const parsed = JSON.parse(stored);
+
+            // Migration: Add teams array if missing
+            if (!parsed.teams) parsed.teams = [];
+
+            // Migration: Ensure tournaments have teamId
+            if (parsed.tournaments.length > 0 && parsed.teams.length === 0) {
+                const defaultTeam: Team = { id: 'default-team', name: 'My Team' };
+                parsed.teams.push(defaultTeam);
+                parsed.tournaments.forEach((t: any) => {
+                    if (!t.teamId) t.teamId = defaultTeam.id;
+                });
+                // Migration: Ensure players have teamId
+                if (parsed.players) {
+                    parsed.players.forEach((p: any) => {
+                        if (!p.teamId) {
+                            if (p.tournamentId) {
+                                const tourney = parsed.tournaments.find((t: any) => t.id === p.tournamentId);
+                                p.teamId = tourney?.teamId || defaultTeam.id;
+                            } else {
+                                p.teamId = defaultTeam.id;
+                            }
+                        }
+                    });
+                }
+            }
+
+            return parsed;
         } catch {
             console.error('Failed to load data from localStorage');
             return DEFAULT_DATA;
@@ -81,7 +109,21 @@ export class FileSystemDriver implements StorageDriver {
             const file = await this.handle.getFile();
             const text = await file.text();
             if (!text) return DEFAULT_DATA;
-            return JSON.parse(text);
+            const parsed = JSON.parse(text);
+
+            // Migration: Add teams array if missing
+            if (!parsed.teams) parsed.teams = [];
+
+            // Migration: Ensure tournaments have teamId
+            if (parsed.tournaments.length > 0 && parsed.teams.length === 0) {
+                const defaultTeam: Team = { id: 'default-team', name: 'My Team' };
+                parsed.teams.push(defaultTeam);
+                parsed.tournaments.forEach((t: any) => {
+                    if (!t.teamId) t.teamId = defaultTeam.id;
+                });
+            }
+
+            return parsed;
         } catch (err) {
             console.error('Failed to load file:', err);
             return DEFAULT_DATA;
@@ -155,7 +197,7 @@ class StorageManager {
         if (!data) return false;
         try {
             const parsed = JSON.parse(data);
-            return parsed.tournaments.length > 0 || parsed.players.length > 0 || parsed.games.length > 0;
+            return (parsed.teams && parsed.teams.length > 0) || parsed.tournaments.length > 0 || parsed.players.length > 0 || parsed.games.length > 0;
         } catch {
             return false;
         }
@@ -179,6 +221,39 @@ export async function saveData(data: AppData): Promise<void> {
     return storageManager.save(data);
 }
 
+export async function saveTeam(team: Team): Promise<void> {
+    const data = await loadData();
+    const idx = data.teams.findIndex(t => t.id === team.id);
+    if (idx >= 0) {
+        data.teams[idx] = team;
+    } else {
+        data.teams.push(team);
+    }
+    await saveData(data);
+}
+
+export async function deleteTeam(id: string): Promise<AppData> {
+    const data = await loadData();
+    data.teams = data.teams.filter(t => t.id !== id);
+
+    // Find all tournaments for this team
+    const tournamentIds = data.tournaments
+        .filter(t => t.teamId === id)
+        .map(t => t.id);
+
+    // Delete tournaments for this team
+    data.tournaments = data.tournaments.filter(t => t.teamId !== id);
+
+    // Delete players for this team
+    data.players = data.players.filter(p => p.teamId !== id);
+
+    // Delete games related to those tournaments
+    data.games = data.games.filter(g => !tournamentIds.includes(g.tournamentId));
+
+    await saveData(data);
+    return data;
+}
+
 export async function saveTournament(tournament: Tournament): Promise<void> {
     const data = await loadData();
     const idx = data.tournaments.findIndex(t => t.id === tournament.id);
@@ -190,13 +265,14 @@ export async function saveTournament(tournament: Tournament): Promise<void> {
     await saveData(data);
 }
 
-export async function deleteTournament(id: string): Promise<void> {
+export async function deleteTournament(id: string): Promise<AppData> {
     const data = await loadData();
     data.tournaments = data.tournaments.filter(t => t.id !== id);
-    // Also delete related players and games
-    data.players = data.players.filter(p => p.tournamentId !== id);
+    // Also delete related games (but NOT players as they are team-level now)
+    // data.players = data.players.filter(p => p.tournamentId !== id); // REMOVED
     data.games = data.games.filter(g => g.tournamentId !== id);
     await saveData(data);
+    return data;
 }
 
 export async function savePlayer(player: Player): Promise<void> {
@@ -242,7 +318,7 @@ export function generateId(): string {
 }
 
 // Import players from CSV or TXT
-export function parsePlayerImport(text: string, tournamentId: string): Player[] {
+export function parsePlayerImport(text: string, teamId: string): Player[] {
     const lines = text.trim().split('\n');
     const players: Player[] = [];
 
@@ -255,7 +331,7 @@ export function parsePlayerImport(text: string, tournamentId: string): Player[] 
                 jerseyNumber: parts[1],
                 primaryPosition: (parts[2] as Player['primaryPosition']) || 'DP',
                 secondaryPositions: [],
-                tournamentId
+                teamId
             });
         }
     }
