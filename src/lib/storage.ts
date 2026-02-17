@@ -44,7 +44,7 @@ export class LocalStorageDriver implements StorageDriver {
                 const defaultTeam: Team = { id: 'default-team', name: 'My Team' };
                 parsed.teams.push(defaultTeam);
                 parsed.tournaments.forEach((t: any) => {
-                    if (!t.teamId) t.teamId = defaultTeam.id;
+                    if (!t.teamId && !t.participatingTeamIds) t.participatingTeamIds = [defaultTeam.id];
                 });
                 // Migration: Ensure players have teamId
                 if (parsed.players) {
@@ -52,13 +52,23 @@ export class LocalStorageDriver implements StorageDriver {
                         if (!p.teamId) {
                             if (p.tournamentId) {
                                 const tourney = parsed.tournaments.find((t: any) => t.id === p.tournamentId);
-                                p.teamId = tourney?.teamId || defaultTeam.id;
+                                p.teamId = tourney?.participatingTeamIds?.[0] || defaultTeam.id;
                             } else {
                                 p.teamId = defaultTeam.id;
                             }
                         }
                     });
                 }
+            }
+
+            // Migration: teamId -> participatingTeamIds
+            if (parsed.tournaments) {
+                parsed.tournaments.forEach((t: any) => {
+                    if (t.teamId && !t.participatingTeamIds) {
+                        t.participatingTeamIds = [t.teamId];
+                        delete t.teamId;
+                    }
+                });
             }
 
             return parsed;
@@ -119,7 +129,17 @@ export class FileSystemDriver implements StorageDriver {
                 const defaultTeam: Team = { id: 'default-team', name: 'My Team' };
                 parsed.teams.push(defaultTeam);
                 parsed.tournaments.forEach((t: any) => {
-                    if (!t.teamId) t.teamId = defaultTeam.id;
+                    if (!t.teamId && !t.participatingTeamIds) t.participatingTeamIds = [defaultTeam.id];
+                });
+            }
+
+            // Migration: teamId -> participatingTeamIds
+            if (parsed.tournaments) {
+                parsed.tournaments.forEach((t: any) => {
+                    if (t.teamId && !t.participatingTeamIds) {
+                        t.participatingTeamIds = [t.teamId];
+                        delete t.teamId;
+                    }
                 });
             }
 
@@ -236,19 +256,22 @@ export async function deleteTeam(id: string): Promise<AppData> {
     const data = await loadData();
     data.teams = data.teams.filter(t => t.id !== id);
 
-    // Find all tournaments for this team
-    const tournamentIds = data.tournaments
-        .filter(t => t.teamId === id)
-        .map(t => t.id);
+    // Remove team from tournaments
+    data.tournaments.forEach(t => {
+        if (t.participatingTeamIds) {
+            t.participatingTeamIds = t.participatingTeamIds.filter(tid => tid !== id);
+        }
+    });
 
-    // Delete tournaments for this team
-    data.tournaments = data.tournaments.filter(t => t.teamId !== id);
+    // Delete tournaments that have no more teams
+    const tournamentsToDelete = data.tournaments.filter(t => t.participatingTeamIds.length === 0).map(t => t.id);
+    data.tournaments = data.tournaments.filter(t => t.participatingTeamIds.length > 0);
 
     // Delete players for this team
     data.players = data.players.filter(p => p.teamId !== id);
 
-    // Delete games related to those tournaments
-    data.games = data.games.filter(g => !tournamentIds.includes(g.tournamentId));
+    // Delete games related to deleted tournaments
+    data.games = data.games.filter(g => !tournamentsToDelete.includes(g.tournamentId));
 
     await saveData(data);
     return data;

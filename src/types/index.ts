@@ -10,11 +10,13 @@ export interface Team {
 
 export interface Tournament {
     id: string;
-    teamId: string; // Linked to a team
+    participatingTeamIds: string[]; // Linked to one or more teams
     name: string;
     startDate: string;
     endDate?: string;
     type: 'league' | 'tournament' | 'friendly';
+    location?: string;
+    format?: string;
 }
 
 export interface Player {

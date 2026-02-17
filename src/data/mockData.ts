@@ -8,11 +8,13 @@ export const mockTeam: Team = {
 
 export const mockTournament: Tournament = {
     id: 't1',
-    teamId: 'team1',
+    participatingTeamIds: ['team1'],
     name: 'Spring Championship 2026',
     startDate: '2026-03-01',
     endDate: '2026-03-15',
-    type: 'tournament'
+    type: 'tournament',
+    location: 'Central Park',
+    format: 'pool'
 };
 
 export const mockPlayers: Player[] = [

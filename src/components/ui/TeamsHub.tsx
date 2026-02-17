@@ -1,6 +1,7 @@
 import type { Team, Tournament, Game } from '../../types';
-import { EmptyState } from '../ui/EmptyState';
+import { EmptyState } from './EmptyState';
 import { HierarchyStepper } from './HierarchyStepper';
+import { SoftballLogo } from './SoftballLogo';
 
 interface TeamsHubProps {
     teams: Team[];
@@ -10,30 +11,51 @@ interface TeamsHubProps {
     onAddTeam: () => void;
     onEditTeam?: (team: Team) => void;
     onDeleteTeam?: (team: Team) => void;
+    onDemoData?: () => void;
 }
 
-export function TeamsHub({ teams, tournaments, games, onSelectTeam, onAddTeam, onEditTeam, onDeleteTeam }: TeamsHubProps) {
+export function TeamsHub({ teams, tournaments, games, onSelectTeam, onAddTeam, onEditTeam, onDeleteTeam, onDemoData }: TeamsHubProps) {
     if (teams.length === 0) {
         return (
-            <div className="app-hub">
-                <main className="hub-content">
+            <div className="app-hub hub-zero-state">
+                <main className="hub-content hub-zero-content">
                     <div className="hero-section">
-                        <div className="logo-large">🥎</div>
-                        <h1 className="hero-title">The Stats Machine</h1>
-                        <p className="hero-subtitle">Professional Analytics & Performance Tracking</p>
+                        <div className="hero-logo-container">
+                            <SoftballLogo size={80} />
+                        </div>
+                        <div>
+                            <h1 className="hero-title hero-title-primary">The Stats Machine</h1>
+                            <p className="hero-subtitle hero-subtitle-primary">
+                                Professional Analytics & Performance Tracking
+                            </p>
+                        </div>
                     </div>
 
-                    <HierarchyStepper currentStep={1} />
+                    <div style={{ width: '100%', maxWidth: '600px' }}>
+                        <HierarchyStepper currentStep={1} />
+                    </div>
 
-                    <div className="card text-center setup-card">
-                        <h2 className="mb-lg">Get Started</h2>
-                        <p className="text-muted mb-xl">
+                    <div className="card text-center setup-card-primary">
+                        <h2 className="setup-card-title">Get Started</h2>
+                        <p className="setup-card-text">
                             Create your first team organization to begin tracking tournaments and player statistics.
                         </p>
-                        <button className="btn btn-primary btn-lg" onClick={onAddTeam}>
-                            + Register Your Team
+                        <button
+                            className="btn btn-hero-primary"
+                            onClick={onAddTeam}
+                        >
+                            + Add Team
                         </button>
                     </div>
+
+                    {onDemoData && (
+                        <button
+                            onClick={onDemoData}
+                            className="link-demo-data"
+                        >
+                            or view demo data
+                        </button>
+                    )}
                 </main>
             </div>
         );
@@ -43,13 +65,15 @@ export function TeamsHub({ teams, tournaments, games, onSelectTeam, onAddTeam, o
         <div className="app-hub">
             <header className="hub-header">
                 <div className="logo">
-                    <div className="logo-icon">🥎</div>
+                    <div className="logo-icon header-logo-icon">
+                        <SoftballLogo size={24} />
+                    </div>
                     <div className="logo-text">
                         <h1>The Stats Machine</h1>
-                        <span>v1.1.0</span>
+                        <span>v1.2.0</span>
                     </div>
                 </div>
-                <button className="btn btn-new" onClick={onAddTeam}>+ New Team</button>
+                <button className="btn btn-new" onClick={onAddTeam}>+ Add Team</button>
             </header>
 
             <main className="hub-content">
@@ -62,7 +86,7 @@ export function TeamsHub({ teams, tournaments, games, onSelectTeam, onAddTeam, o
 
                 <div className="teams-grid">
                     {teams.map(team => {
-                        const teamTournaments = tournaments.filter(t => t.teamId === team.id);
+                        const teamTournaments = tournaments.filter(t => t.participatingTeamIds?.includes(team.id));
                         const teamGames = games.filter(g => teamTournaments.some(t => t.id === g.tournamentId));
 
                         return (
@@ -124,7 +148,7 @@ export function TeamsHub({ teams, tournaments, games, onSelectTeam, onAddTeam, o
                     <div className="team-hub-card add-card" onClick={onAddTeam}>
                         <div className="team-card-icon">+</div>
                         <div className="team-card-info">
-                            <h3 className="team-name">Add New Team</h3>
+                            <h3 className="team-name">Add Team</h3>
                             <p className="team-desc">Register another squad or organization.</p>
                         </div>
                     </div>

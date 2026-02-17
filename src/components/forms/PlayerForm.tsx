@@ -135,7 +135,7 @@ export function PlayerForm({ player, teamId, onSave, onCancel, onBulkImport, onD
         <div className="modal-content">
             <div className="modal-header" style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                    <h3>{player ? 'Edit' : 'Add New'} Athlete</h3>
+                    <h3>{player ? 'Edit' : 'Add New'} Player</h3>
                     <p>Enter individual player details for tracking</p>
                 </div>
                 {!player && onBulkImport && (

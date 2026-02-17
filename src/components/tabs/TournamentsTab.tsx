@@ -1,25 +1,26 @@
-import type { Tournament, Game } from '../../types';
+import type { Tournament, Game, Team } from '../../types';
 import { EmptyState } from '../ui/EmptyState';
 
 interface TournamentsTabProps {
     tournaments: Tournament[];
     games: Game[]; // To show game count
+    teams: Team[];
     onSelectTournament: (t: Tournament) => void;
     onAddTournament: () => void;
     onEditTournament: (t: Tournament) => void;
     onDeleteTournament: (t: Tournament) => void;
 }
 
-export function TournamentsTab({ tournaments, games, onSelectTournament, onAddTournament, onEditTournament, onDeleteTournament }: TournamentsTabProps) {
+export function TournamentsTab({ tournaments, games, teams, onSelectTournament, onAddTournament, onEditTournament, onDeleteTournament }: TournamentsTabProps) {
     if (tournaments.length === 0) {
         return (
             <EmptyState
                 icon="🏆"
                 title="No Events Found"
-                message="Create a tournament or league to start tracking games."
+                message="Create an event or league to start tracking games."
                 action={
                     <button className="btn btn-new" onClick={onAddTournament}>
-                        + New Tournament
+                        + Add Event
                     </button>
                 }
             />
@@ -33,6 +34,7 @@ export function TournamentsTab({ tournaments, games, onSelectTournament, onAddTo
                     const tGames = games.filter(g => g.tournamentId === t.id);
                     const gameCount = tGames.length;
                     const winCount = tGames.filter(g => g.teamScore > g.opponentScore).length;
+                    const teamCount = t.participatingTeamIds?.length || 0;
 
                     return (
                         <div key={t.id} className="card hover-card" onClick={() => onSelectTournament(t)} style={{ cursor: 'pointer' }}>
@@ -52,6 +54,10 @@ export function TournamentsTab({ tournaments, games, onSelectTournament, onAddTo
 
                             <div className="card-body">
                                 <div className="stat-grid-mini">
+                                    <div className="stat">
+                                        <span className="label">Teams</span>
+                                        <span className="value">{teamCount}</span>
+                                    </div>
                                     <div className="stat">
                                         <span className="label">Games</span>
                                         <span className="value">{gameCount}</span>
