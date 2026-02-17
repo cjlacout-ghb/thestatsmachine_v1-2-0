@@ -205,19 +205,51 @@ class StorageManager {
     }
 
     async load(): Promise<AppData> {
-        return this.driver.load();
+        const fileData = await this.driver.load();
+
+        // If file driver returned default/empty but we have localStorage data, use that as fallback
+        // This handles the "Permission required" state after a Vite/page reload
+        if (this.driver.type === 'file' &&
+            fileData.teams.length === 0 &&
+            fileData.tournaments.length === 0) {
+            const cached = localStorage.getItem(STORAGE_KEY);
+            if (cached) {
+                try {
+                    return JSON.parse(cached);
+                } catch {
+                    return fileData;
+                }
+            }
+        }
+
+        return fileData;
     }
 
     async save(data: AppData): Promise<void> {
+        // ALWAYS mirror to localStorage as a safety cache
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        } catch (e) {
+            console.warn('Failed to mirror data to localStorage:', e);
+        }
+
         return this.driver.save(data);
     }
 
     hasLegacyData(): boolean {
+        // Now that we mirror, legacy data is always present. 
+        // We only show the migration banner if the preference is still 'local' but there's data.
+        const pref = localStorage.getItem(DRIVER_PREFERENCE_KEY);
+        if (pref === 'file') return false;
+
         const data = localStorage.getItem(STORAGE_KEY);
         if (!data) return false;
         try {
             const parsed = JSON.parse(data);
-            return (parsed.teams && parsed.teams.length > 0) || parsed.tournaments.length > 0 || parsed.players.length > 0 || parsed.games.length > 0;
+            return (parsed.teams && parsed.teams.length > 0) ||
+                parsed.tournaments.length > 0 ||
+                parsed.players.length > 0 ||
+                parsed.games.length > 0;
         } catch {
             return false;
         }

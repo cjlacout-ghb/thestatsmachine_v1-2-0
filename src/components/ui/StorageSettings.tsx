@@ -36,9 +36,8 @@ export function StorageSettings({ onStorageChange, onClose }: StorageSettingsPro
             // Migrate current data to the new file if confirmed
             const currentData = await loadData();
             if (currentData.tournaments.length > 0) {
-                if (confirm('Would you like to migrate your current data to the new file? (Legacy data in browser cache will be cleared)')) {
+                if (confirm('Would you like to migrate your current data to the new file?')) {
                     await newDriver.save(currentData);
-                    storageManager.clearLegacyData();
                 }
             }
 

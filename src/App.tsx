@@ -41,15 +41,47 @@ function App() {
       const stored = await loadData();
 
       // Phase 3: Check for migration need
-      if (storageManager.getDriver().type === 'local' && storageManager.hasLegacyData()) {
+      const dismissed = localStorage.getItem('tsm_migration_dismissed');
+      if (storageManager.getDriver().type === 'local' && storageManager.hasLegacyData() && !dismissed) {
         setShowMigrationBanner(true);
       }
 
       // No data - TeamsHub will handle the "Start Fresh" state
       setData(stored);
+
+      // Restore session
+      const savedTeamId = localStorage.getItem('tsm_active_team');
+      if (savedTeamId) {
+        const team = stored.teams.find(t => t.id === savedTeamId);
+        if (team) {
+          setActiveTeam(team);
+          const savedTourneyId = localStorage.getItem('tsm_active_tournament');
+          if (savedTourneyId) {
+            const tourney = stored.tournaments.find(t => t.id === savedTourneyId);
+            if (tourney && tourney.participatingTeamIds?.includes(team.id)) {
+              setActiveTournament(tourney);
+            }
+          }
+        }
+      }
     };
     init();
   }, []);
+
+  // Persist session context
+  useEffect(() => {
+    if (activeTeam) {
+      localStorage.setItem('tsm_active_team', activeTeam.id);
+    } else {
+      localStorage.removeItem('tsm_active_team');
+    }
+
+    if (activeTournament) {
+      localStorage.setItem('tsm_active_tournament', activeTournament.id);
+    } else {
+      localStorage.removeItem('tsm_active_tournament');
+    }
+  }, [activeTeam, activeTournament]);
 
   // Filter tournaments by active team
   const filteredTournaments = activeTeam
@@ -226,6 +258,7 @@ function App() {
           onEditTeam={(team) => { setEditItem(team); setModalType('team'); }}
           onDeleteTeam={(team) => handleDeleteTeam(team.id)}
           onDemoData={loadMockData}
+          onOpenHelp={() => setModalType('help')}
         />
         <AppModals
           modalType={modalType}
@@ -270,7 +303,7 @@ function App() {
         onManualSave={handleManualSave}
         onSwitchTeam={() => setActiveTeam(null)}
         onOpenStorage={() => setModalType('storage')}
-        onAddTournament={() => setModalType('tournament')}
+        activeTab={activeTab}
         data={data}
         filteredPlayers={filteredPlayers}
         searchGames={searchGames}
@@ -287,7 +320,9 @@ function App() {
             setModalType('game');
           }
         }}
+        onOpenHelp={() => setModalType('help')}
       />
+
 
       {/* Migration Banner */}
       {showMigrationBanner && (
@@ -315,9 +350,12 @@ function App() {
             Move to Local File
           </button>
           <button
-            onClick={() => setShowMigrationBanner(false)}
+            onClick={() => {
+              setShowMigrationBanner(false);
+              localStorage.setItem('tsm_migration_dismissed', 'true');
+            }}
             style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '1.2rem' }}
-            title="Dismiss"
+            title="Dismiss Permanently"
           >
             ×
           </button>
@@ -379,73 +417,52 @@ function App() {
               }
             }}
           />
-          <div className="page-header">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+
+          {/* Persistent Context Header */}
+          <div className="dash-header-bar" style={{
+            padding: 'var(--space-lg) var(--space-xl)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            borderBottom: '1px solid var(--border-light)',
+            marginBottom: 'var(--space-lg)'
+          }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
               <div>
-                <h2 className="page-title">
+                <h2 className="text-bold" style={{ fontSize: '1.5rem', letterSpacing: '-0.02em', textTransform: 'uppercase' }}>
                   {activeTab === 'team' && 'Team Overview'}
                   {activeTab === 'players' && 'Roster Management'}
                   {activeTab === 'tournaments' && 'Event Management'}
-                  {activeTab === 'games' && `${activeTournament?.name || 'Tournament'} - Game Log`}
-                  {activeTab === 'stats' && `${activeTournament?.name || 'Tournament'} - Stats`}
+                  {activeTab === 'games' && 'Game Log'}
+                  {activeTab === 'stats' && 'Performance Stats'}
                 </h2>
-                <p className="page-subtitle">
-                  {activeTab === 'team' && `Performance summary for ${activeTeam?.name}.`}
-                  {activeTab === 'players' && 'Manage your players and track individual progress.'}
-                  {activeTab === 'tournaments' && 'Manage events and tournaments.'}
-                  {activeTab === 'games' && 'Record and review game-by-game performance data.'}
-                  {activeTab === 'stats' && 'Detailed statistical analysis and leaderboards.'}
-                </p>
               </div>
-              {/* Header Actions */}
-              <div style={{ display: 'flex', gap: 'var(--space-md)', alignItems: 'center' }}>
-                {activeTeam && !activeTournament && activeTab === 'team' && (
-                  <>
-                    <button
-                      className="btn btn-ghost btn-sm"
-                      onClick={() => { setEditItem(activeTeam); setModalType('team'); }}
-                      title="Edit Team"
-                    >
-                      ⚙️ Edit Team
-                    </button>
-                    <button
-                      className="btn btn-ghost btn-sm text-danger"
-                      onClick={() => handleDeleteTeam(activeTeam.id)}
-                      title="Delete Team"
-                    >
-                      🗑 Delete Team
-                    </button>
-                  </>
+
+              <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap' }}>
+                {activeTeam && (
+                  <div className="identity-badge" onClick={() => { setEditItem(activeTeam); setModalType('team'); }} style={{ cursor: 'pointer' }}>
+                    <div className="identity-icon">🥎</div>
+                    <div className="identity-info">
+                      <span className="identity-label">Active Team</span>
+                      <span className="identity-name">{activeTeam.name}</span>
+                    </div>
+                    <span style={{ fontSize: '0.7rem', marginLeft: '4px', opacity: 0.5 }}>⚙️</span>
+                  </div>
                 )}
                 {activeTournament && (
-                  <>
-                    <button
-                      className="btn btn-ghost btn-sm"
-                      onClick={() => exportTournamentReport(activeTournament, filteredPlayers, filteredGames)}
-                      title="Export PDF"
-                      style={{ color: 'var(--accent-primary)' }}
-                    >
-                      📄 Report
-                    </button>
-                    <button
-                      className="btn btn-ghost btn-sm"
-                      onClick={() => { setEditItem(activeTournament); setModalType('tournament'); }}
-                      title="Edit Tournament"
-                    >
-                      ⚙️ Edit Event
-                    </button>
-                    <button
-                      className="btn btn-ghost btn-sm text-danger"
-                      onClick={() => handleDeleteTournament(activeTournament.id)}
-                      title="Delete Tournament"
-                    >
-                      🗑 Delete Event
-                    </button>
-                  </>
+                  <div className="identity-badge" onClick={() => { setEditItem(activeTournament); setModalType('tournament'); }} style={{ cursor: 'pointer', borderColor: 'var(--avg)' }}>
+                    <div className="identity-icon" style={{ background: 'var(--avg)' }}>🏆</div>
+                    <div className="identity-info">
+                      <span className="identity-label">Active Event</span>
+                      <span className="identity-name">{activeTournament.name}</span>
+                    </div>
+                    <span style={{ fontSize: '0.7rem', marginLeft: '4px', opacity: 0.5 }}>⚙️</span>
+                  </div>
                 )}
               </div>
             </div>
           </div>
+
 
           <AppContent
             activeTab={activeTab}
@@ -469,10 +486,6 @@ function App() {
             onDeleteTournament={(id) => handleDeleteTournament(id)}
           />
 
-          <button className="manual-btn" onClick={() => setModalType('help')} title="Help & Documentation">
-            <span>📖</span> Help
-          </button>
-
           <AppModals
             modalType={modalType}
             editItem={editItem}
@@ -492,6 +505,10 @@ function App() {
               setData(newData);
               setActiveTeam(null);
               setActiveTournament(null);
+              if (storageManager.getDriver().type === 'file') {
+                setShowMigrationBanner(false);
+                localStorage.setItem('tsm_migration_dismissed', 'true');
+              }
             }}
           />
         </main>

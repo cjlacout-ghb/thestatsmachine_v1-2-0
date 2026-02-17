@@ -12,26 +12,42 @@ interface TeamsHubProps {
     onEditTeam?: (team: Team) => void;
     onDeleteTeam?: (team: Team) => void;
     onDemoData?: () => void;
+    onOpenHelp: () => void;
 }
 
-export function TeamsHub({ teams, tournaments, games, onSelectTeam, onAddTeam, onEditTeam, onDeleteTeam, onDemoData }: TeamsHubProps) {
+
+export function TeamsHub({ teams, tournaments, games, onSelectTeam, onAddTeam, onEditTeam, onDeleteTeam, onDemoData, onOpenHelp }: TeamsHubProps) {
     if (teams.length === 0) {
         return (
             <div className="app-hub hub-zero-state">
-                <main className="hub-content hub-zero-content">
-                    <div className="hero-section">
-                        <div className="hero-logo-container">
-                            <SoftballLogo size={80} />
+                <header className="hub-header">
+                    <div className="logo">
+                        <div className="logo-icon header-logo-icon">
+                            <SoftballLogo size={24} />
                         </div>
-                        <div>
-                            <h1 className="hero-title hero-title-primary">The Stats Machine</h1>
-                            <p className="hero-subtitle hero-subtitle-primary">
-                                Professional Analytics & Performance Tracking
-                            </p>
+                        <div className="logo-text">
+                            <h1>The Stats Machine</h1>
+                            <span>v1.2.0</span>
                         </div>
                     </div>
+                    <button
+                        className="btn btn-ghost btn-sm"
+                        onClick={onOpenHelp}
+                        style={{ fontWeight: '700', marginLeft: 'auto' }}
+                    >
+                        📖 Help
+                    </button>
+                </header>
+                <main className="hub-content hub-zero-content">
+                    <div className="hero-section" style={{ textAlign: 'center', marginBottom: 'var(--space-2xl)' }}>
+                        <div style={{ fontSize: '5rem', marginBottom: 'var(--space-lg)' }}>🥎</div>
+                        <h1 className="hero-title hero-title-primary">The Stats Machine</h1>
+                        <p className="hero-subtitle hero-subtitle-primary">
+                            Professional Analytics & Performance Tracking
+                        </p>
+                    </div>
 
-                    <div style={{ width: '100%', maxWidth: '600px' }}>
+                    <div style={{ width: '100%', maxWidth: '600px', marginBottom: 'var(--space-2xl)' }}>
                         <HierarchyStepper currentStep={1} />
                     </div>
 
@@ -73,8 +89,15 @@ export function TeamsHub({ teams, tournaments, games, onSelectTeam, onAddTeam, o
                         <span>v1.2.0</span>
                     </div>
                 </div>
-                <button className="btn btn-new" onClick={onAddTeam}>+ Add Team</button>
+                <button
+                    className="btn btn-ghost btn-sm"
+                    onClick={onOpenHelp}
+                    style={{ fontWeight: '700', marginLeft: 'auto' }}
+                >
+                    📖 Help
+                </button>
             </header>
+
 
             <main className="hub-content">
                 <div className="hub-intro">
@@ -154,6 +177,6 @@ export function TeamsHub({ teams, tournaments, games, onSelectTeam, onAddTeam, o
                     </div>
                 </div>
             </main>
-        </div>
+        </div >
     );
 }

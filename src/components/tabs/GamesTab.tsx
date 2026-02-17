@@ -1,26 +1,32 @@
-import type { Game, Player } from '../../types';
+import type { Game, Player, Tournament } from '../../types';
 import { EmptyState } from '../ui/EmptyState';
+import { getMonthStr, getDayStr } from '../../lib/dateUtils';
 
 interface GamesTabProps {
     games: Game[];
     players: Player[];
+    tournament?: Tournament | null;
     onSelectGame?: (game: Game) => void;
     onAddGame?: () => void;
+    onEditTournament?: (t: Tournament) => void;
+    onDeleteTournament?: (id: string) => void;
 }
 
-export function GamesTab({ games, players, onSelectGame, onAddGame }: GamesTabProps) {
+export function GamesTab({ games, players, tournament, onSelectGame, onAddGame, onEditTournament, onDeleteTournament }: GamesTabProps) {
     if (games.length === 0) {
         return (
-            <EmptyState
-                icon="📅"
-                title="No Games Yet"
-                message="Add a game to start tracking statistics."
-                action={
-                    <button className="btn btn-new" onClick={onAddGame}>
-                        + Add Game
-                    </button>
-                }
-            />
+            <div className="dash-content">
+                <EmptyState
+                    icon="📅"
+                    title="No Games Yet"
+                    message="Add a game to start tracking statistics."
+                    action={
+                        <button className="btn btn-new" onClick={onAddGame}>
+                            + Add Game
+                        </button>
+                    }
+                />
+            </div>
         );
     }
 
@@ -34,14 +40,6 @@ export function GamesTab({ games, players, onSelectGame, onAddGame }: GamesTabPr
 
     return (
         <div className="dash-content">
-            <div className="card-header" style={{ marginBottom: 'var(--space-lg)' }}>
-                <h3 className="card-title">{games.length} Total Games Recorded</h3>
-                <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
-                    <button className="btn btn-secondary" style={{ padding: '6px 16px', fontSize: '0.8125rem' }}>Full History</button>
-                    <button className="btn btn-primary" style={{ padding: '6px 16px', fontSize: '0.8125rem' }}>Export PDF</button>
-                </div>
-            </div>
-
             <div style={{ display: 'grid', gap: 'var(--space-lg)' }}>
                 {sortedGames.map(game => {
                     const isWin = game.teamScore > game.opponentScore;
@@ -50,8 +48,6 @@ export function GamesTab({ games, players, onSelectGame, onAddGame }: GamesTabPr
                     // Top performers logic
                     const topBatter = game.playerStats.length > 0 ? game.playerStats.reduce((best, ps) =>
                         ps.h > (best?.h || 0) ? ps : best, game.playerStats[0]) : null;
-
-                    const gameDate = new Date(game.date);
 
                     return (
                         <div
@@ -64,10 +60,10 @@ export function GamesTab({ games, players, onSelectGame, onAddGame }: GamesTabPr
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xl)' }}>
                                     <div className="text-center">
                                         <div className="text-bold text-muted" style={{ fontSize: '0.75rem', textTransform: 'uppercase' }}>
-                                            {gameDate.toLocaleDateString('en-US', { month: 'short' })}
+                                            {getMonthStr(game.date)}
                                         </div>
                                         <div className="text-bold" style={{ fontSize: '1.5rem', lineHeight: 1 }}>
-                                            {gameDate.toLocaleDateString('en-US', { day: 'numeric' })}
+                                            {getDayStr(game.date)}
                                         </div>
                                     </div>
 
@@ -118,6 +114,21 @@ export function GamesTab({ games, players, onSelectGame, onAddGame }: GamesTabPr
                         </div>
                     );
                 })}
+
+                {/* In-page Add Game card */}
+                <div
+                    className="card dashed-border flex-center"
+                    onClick={onAddGame}
+                    style={{ minHeight: '100px', cursor: 'pointer', background: 'var(--bg-subtle)', padding: 'var(--space-lg)' }}
+                >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
+                        <div className="icon-circle" style={{ background: 'var(--bg-card)', fontSize: '1.2rem', width: '40px', height: '40px' }}>+</div>
+                        <div>
+                            <h3 className="text-bold" style={{ fontSize: '1rem' }}>Log New Game</h3>
+                            <p className="text-muted text-sm">Add another game to this event</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );

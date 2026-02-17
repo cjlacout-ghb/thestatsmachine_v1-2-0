@@ -34,9 +34,21 @@ export function TeamForm({ team, onSave, onCancel }: TeamFormProps) {
     return (
         <div className="modal-content">
             <div className="modal-header">
-                <h3>{team ? 'Edit' : 'Create New'} Team</h3>
-                <p>Manage your squad and organization details</p>
+                <h3>{team ? 'Update Organization' : 'Register New Team'}</h3>
+                <p>{team ? 'Modify your squad and institutional details' : 'Create a new team silo for your stats tracking'}</p>
             </div>
+
+            {team && (
+                <div className="identity-header">
+                    <div className="identity-badge">
+                        <div className="identity-icon">🥎</div>
+                        <div className="identity-info">
+                            <span className="identity-label">Editing Team Profile</span>
+                            <span className="identity-name">{team.name}</span>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <form onSubmit={handleSubmit}>
                 <div className="modal-body">

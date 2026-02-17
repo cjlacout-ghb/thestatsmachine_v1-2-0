@@ -5,27 +5,35 @@ import { EmptyState } from '../ui/EmptyState';
 interface TeamTabProps {
     games: Game[];
     players: Player[];
-    teamName?: string;
+    team: Team | null;
     onAddGame?: () => void;
     onAddPlayer?: () => void;
     onManageRoster?: () => void;
+    onEditTeam?: (t: Team) => void;
+    onDeleteTeam?: (id: string) => void;
 }
 
-export function TeamTab({ games, players: _players, teamName = 'My Team', onAddGame, onAddPlayer, onManageRoster }: TeamTabProps) {
+export function TeamTab({ games, players: _players, team, onAddGame, onAddPlayer, onManageRoster, onEditTeam, onDeleteTeam }: TeamTabProps) {
+    if (!team) return null;
+    const teamName = team.name;
+
     if (games.length === 0) {
         return (
-            <EmptyState
-                icon="🥎"
-                title="No Games Recorded"
-                message="Enter game data to see team statistics."
-                action={
-                    <button className="btn btn-new" onClick={onAddGame}>
-                        + Add Game
-                    </button>
-                }
-            />
+            <div className="dash-content">
+                <EmptyState
+                    icon="🥎"
+                    title="No Games Recorded"
+                    message="Enter game data to see team statistics."
+                    action={
+                        <button className="btn btn-new" onClick={onAddGame}>
+                            + Add Game
+                        </button>
+                    }
+                />
+            </div>
         );
     }
+
 
     // Aggregate all player stats
     const allStats = games.flatMap(g => g.playerStats);

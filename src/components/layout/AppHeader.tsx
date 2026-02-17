@@ -10,15 +10,17 @@ interface AppHeaderProps {
     onManualSave: () => void;
     onSwitchTeam: () => void;
     onOpenStorage: () => void;
-    onAddTournament: () => void;
+    activeTab: TabId;
     // Search Props
-    data: AppData; // To find tournament by ID
+    data: AppData;
     filteredPlayers: Player[];
     searchGames: Game[];
     onNavigateSearch: (
         target: { type: 'player', item: Player } | { type: 'game', item: Game, tournament: Tournament }
     ) => void;
+    onOpenHelp: () => void;
 }
+
 
 export function AppHeader({
     activeTeam,
@@ -28,11 +30,12 @@ export function AppHeader({
     onManualSave,
     onSwitchTeam,
     onOpenStorage,
-    onAddTournament,
     data,
     filteredPlayers,
     searchGames,
-    onNavigateSearch
+    onNavigateSearch,
+    activeTab,
+    onOpenHelp
 }: AppHeaderProps) {
     return (
         <header className="app-header">
@@ -107,17 +110,15 @@ export function AppHeader({
                         🔄 Switch Team
                     </button>
 
-                    {/* Context Action Button */}
-                    {!activeTournament && activeTeam && (
-                        <button
-                            className="btn btn-primary"
-                            onClick={onAddTournament}
-                            style={{ padding: '8px 16px' }}
-                            title="Add Tournament"
-                        >
-                            + Add Event
-                        </button>
-                    )}
+                    <button
+                        className="btn btn-ghost btn-sm"
+                        onClick={onOpenHelp}
+                        style={{ fontWeight: '700' }}
+                        title="Help & Documentation"
+                    >
+                        📖 Help
+                    </button>
+
                 </div>
             </div>
         </header>

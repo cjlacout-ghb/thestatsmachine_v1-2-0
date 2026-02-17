@@ -2,6 +2,8 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { Tournament, Player, Game } from '../types';
 import { calcBatting, calcPitching, calcFielding, formatAvg, formatERA, formatIP, parseIP } from './calculations';
+import { formatLocalDate } from './dateUtils';
+
 
 export function exportTournamentReport(
     tournament: Tournament,
@@ -147,7 +149,7 @@ export function exportTournamentReport(
     const gameRows = games.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(g => {
         const result = g.teamScore > g.opponentScore ? 'W' : g.teamScore < g.opponentScore ? 'L' : 'T';
         return [
-            g.date,
+            formatLocalDate(g.date),
             g.opponent,
             `${result} ${g.teamScore}-${g.opponentScore}`,
             g.homeAway === 'home' ? 'Home' : 'Away',

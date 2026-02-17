@@ -1,11 +1,13 @@
-import type { Game, Player } from '../../types';
+import type { Game, Player, Tournament } from '../../types';
 import { calcBatting, formatAvg, getAvgLevel } from '../../lib/calculations';
 import { StatTable } from '../ui/StatTable';
 import { EmptyState } from '../ui/EmptyState';
+import { exportTournamentReport } from '../../lib/pdfGenerator';
 
 interface StatsTabProps {
     games: Game[];
     players: Player[];
+    tournament?: Tournament | null;
     onAddGame?: () => void;
     onAddPlayer?: () => void;
 }
@@ -30,28 +32,8 @@ interface PlayerBattingRow {
     ops: number;
 }
 
-export function StatsTab({ games, players, onAddGame, onAddPlayer }: StatsTabProps) {
-    if (games.length === 0 || players.length === 0) {
-        return (
-            <EmptyState
-                icon="📊"
-                title="No Statistics Available"
-                message="Add players and games to see detailed statistics."
-                action={
-                    <div style={{ display: 'flex', gap: 'var(--space-md)' }}>
-                        <button className="btn btn-new" onClick={onAddPlayer}>
-                            + Add Player
-                        </button>
-                        <button className="btn btn-new" onClick={onAddGame}>
-                            + Add Game
-                        </button>
-                    </div>
-                }
-            />
-        );
-    }
-
-    // Build batting leaderboard
+export function StatsTab({ games, players, tournament, onAddGame, onAddPlayer }: StatsTabProps) {
+    // Build batting leaderboard (hoisted before return)
     const battingData: PlayerBattingRow[] = players.map(player => {
         const playerGames = games.flatMap(g =>
             g.playerStats.filter(ps => ps.playerId === player.id)
@@ -124,53 +106,65 @@ export function StatsTab({ games, players, onAddGame, onAddPlayer }: StatsTabPro
 
     return (
         <div className="dash-content">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-lg)', gap: 'var(--space-md)', flexWrap: 'wrap' }}>
-                <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
-                    <button className="btn btn-secondary" style={{ padding: '8px 16px', borderRadius: '20px' }}>All Positions ▾</button>
-                    <button className="btn btn-secondary" style={{ padding: '8px 16px', borderRadius: '20px' }}>League Games ▾</button>
-                    <button className="btn btn-secondary" style={{ padding: '8px 16px', borderRadius: '20px' }}>Tournaments ▾</button>
-                    <button className="btn btn-secondary" style={{ padding: '8px 16px', borderRadius: '20px' }}>Last 10 Games ▾</button>
-                </div>
-                <div style={{ display: 'flex', gap: 'var(--space-md)' }}>
-                    <button className="btn btn-ghost">
-                        <span style={{ fontSize: '1.1rem' }}>☊</span> Advanced Filters
-                    </button>
-                    <button className="btn btn-primary" onClick={onAddGame}>
-                        <span style={{ fontSize: '1.1rem' }}>+</span> Add Game Data
-                    </button>
-                </div>
-            </div>
-
-            <div className="stat-table-wrapper card" style={{ padding: 0, overflow: 'hidden' }}>
-                <StatTable
-                    data={battingData}
-                    columns={columns}
-                    keyField="id"
+            {games.length === 0 || players.length === 0 ? (
+                <EmptyState
+                    icon="📊"
+                    title="No Statistics Available"
+                    message="Add players and games to see detailed statistics."
+                    action={
+                        <div style={{ display: 'flex', gap: 'var(--space-md)' }}>
+                            <button className="btn btn-new" onClick={onAddPlayer}>
+                                + Add Player
+                            </button>
+                            <button className="btn btn-new" onClick={onAddGame}>
+                                + Add Game
+                            </button>
+                        </div>
+                    }
                 />
-            </div>
+            ) : (
+                <>
+                    <div className="stat-table-wrapper card" style={{ padding: 0, overflow: 'hidden' }}>
+                        <StatTable
+                            data={battingData}
+                            columns={columns}
+                            keyField="id"
+                        />
+                    </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'var(--space-xl)' }}>
-                <div className="text-muted" style={{ fontSize: '0.8125rem', fontWeight: '500' }}>
-                    Showing <strong className="text-primary">{battingData.length}</strong> players from roster
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-lg)' }}>
-                    <span className="text-bold text-muted" style={{ fontSize: '0.75rem', textTransform: 'uppercase' }}>Legend:</span>
-                    <div style={{ display: 'flex', gap: '16px', fontSize: '0.7rem', fontWeight: '800', textTransform: 'uppercase' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--elite)' }}></div>
-                            <span style={{ color: 'var(--elite)' }}>Elite</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'var(--space-xl)' }}>
+                        <div className="text-muted" style={{ fontSize: '0.8125rem', fontWeight: '500' }}>
+                            Showing <strong className="text-primary">{battingData.length}</strong> players from roster
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--avg)' }}></div>
-                            <span style={{ color: 'var(--avg)' }}>Avg</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--under)' }}></div>
-                            <span style={{ color: 'var(--under)' }}>Under</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-lg)' }}>
+                            {tournament && (
+                                <button
+                                    className="btn btn-ghost btn-sm"
+                                    onClick={() => exportTournamentReport(tournament, players, games)}
+                                    style={{ color: 'var(--accent-primary)', fontWeight: '700', marginRight: 'var(--space-md)' }}
+                                >
+                                    📄 Export PDF Report
+                                </button>
+                            )}
+                            <span className="text-bold text-muted" style={{ fontSize: '0.75rem', textTransform: 'uppercase' }}>Legend:</span>
+                            <div style={{ display: 'flex', gap: '16px', fontSize: '0.7rem', fontWeight: '800', textTransform: 'uppercase' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--elite)' }}></div>
+                                    <span style={{ color: 'var(--elite)' }}>Elite</span>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--avg)' }}></div>
+                                    <span style={{ color: 'var(--avg)' }}>Avg</span>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--under)' }}></div>
+                                    <span style={{ color: 'var(--under)' }}>Under</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
+                </>
+            )}
         </div>
     );
 }

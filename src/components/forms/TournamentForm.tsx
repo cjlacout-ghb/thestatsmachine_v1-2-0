@@ -25,8 +25,8 @@ export function TournamentForm({ tournament, availableTeams, initialTeamId, onSa
     const validate = () => {
         const errs: Record<string, string> = {};
         if (!name.trim()) errs.name = 'Name is required';
-        if (!startDate) errs.startDate = 'Start date is required';
-        if (participatingTeamIds.length === 0) errs.teams = 'At least one team must be selected';
+
+
 
         if (startDate && endDate && startDate > endDate) {
             errs.endDate = 'End date must be after start date';
@@ -51,20 +51,37 @@ export function TournamentForm({ tournament, availableTeams, initialTeamId, onSa
         });
     };
 
-    const toggleTeam = (teamId: string) => {
-        setParticipatingTeamIds(prev =>
-            prev.includes(teamId)
-                ? prev.filter(id => id !== teamId)
-                : [...prev, teamId]
-        );
-    };
+
+
+    const editingTeam = availableTeams.find(t => t.id === participatingTeamIds[0]);
 
     return (
         <div className="modal-content">
             <div className="modal-header">
-                <h3>{tournament ? 'Edit' : 'Create New'} Event</h3>
-                <p>Setup your tournament details and participating teams</p>
+                <h3>{tournament ? 'Update Event Settings' : 'Initialize New Event'}</h3>
+                <p>{tournament ? 'Configure tournament details and team participants' : 'Setup a new competitive event or league season'}</p>
             </div>
+
+            {tournament && (
+                <div className="identity-header">
+                    <div className="identity-badge" style={{ borderColor: 'var(--avg)' }}>
+                        <div className="identity-icon" style={{ background: 'var(--avg)' }}>🏆</div>
+                        <div className="identity-info">
+                            <span className="identity-label">Editing Event</span>
+                            <span className="identity-name">{tournament.name}</span>
+                        </div>
+                    </div>
+                    {editingTeam && (
+                        <div className="identity-badge">
+                            <div className="identity-icon">🥎</div>
+                            <div className="identity-info">
+                                <span className="identity-label">Primary Team</span>
+                                <span className="identity-name">{editingTeam.name}</span>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
 
             <form onSubmit={handleSubmit}>
                 <div className="modal-body">
@@ -80,37 +97,31 @@ export function TournamentForm({ tournament, availableTeams, initialTeamId, onSa
                         {errors.name && <span className="form-error">{errors.name}</span>}
                     </div>
 
-                    <div className="form-group">
-                        <label className="form-label">Participating Teams</label>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '8px', maxHeight: '150px', overflowY: 'auto', border: '1px solid var(--border-color)', padding: '8px', borderRadius: 'var(--radius-md)' }}>
-                            {availableTeams.map(team => (
-                                <label key={team.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.875rem', cursor: 'pointer' }}>
-                                    <input
-                                        type="checkbox"
-                                        checked={participatingTeamIds.includes(team.id)}
-                                        onChange={() => toggleTeam(team.id)}
-                                    />
-                                    {team.name}
-                                </label>
-                            ))}
-                        </div>
-                        {errors.teams && <span className="form-error">{errors.teams}</span>}
-                    </div>
+
 
                     <div className="grid-2">
                         <div className="form-group">
-                            <label className="form-label">Start Date</label>
+                            <label className="form-label">Start Date (Optional)</label>
+
                             <input
                                 type="date"
                                 value={startDate}
-                                onChange={e => setStartDate(e.target.value)}
+                                onChange={e => {
+                                    const newDate = e.target.value;
+                                    setStartDate(newDate);
+                                    // Sync end date if it's empty or now invalid (before start date)
+                                    if (!endDate || endDate < newDate) {
+                                        setEndDate(newDate);
+                                    }
+                                }}
                                 className={`form-control ${errors.startDate ? 'error' : ''}`}
                             />
                             {errors.startDate && <span className="form-error">{errors.startDate}</span>}
                         </div>
 
                         <div className="form-group">
-                            <label className="form-label">End Date</label>
+                            <label className="form-label">End Date (Optional)</label>
+
                             <input
                                 type="date"
                                 value={endDate}
@@ -146,7 +157,8 @@ export function TournamentForm({ tournament, availableTeams, initialTeamId, onSa
                     </div>
 
                     <div className="form-group">
-                        <label className="form-label mb-sm">Event Type</label>
+                        <label className="form-label mb-sm">Event Type (Optional)</label>
+
                         <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
                             {['tournament', 'league', 'friendly'].map(t => (
                                 <button

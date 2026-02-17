@@ -76,6 +76,9 @@ export function AppModals({
                     <GameForm
                         game={editItem as Game | undefined}
                         tournamentId={activeTournament.id}
+                        initialDate={activeTournament.startDate}
+                        teamName={activeTeam.name}
+                        players={data.players.filter(p => p.teamId === activeTeam.id)}
                         onSave={onSaveGame}
                         onCancel={onClose}
                         onDelete={editItem ? () => onDeleteGame?.((editItem as Game).id) : undefined}
