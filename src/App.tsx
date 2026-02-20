@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { AppData, Team, Tournament, Player, Game } from './types';
-import { loadData, saveData, saveTeam, deleteTeam, saveTournament, savePlayer, saveGame, deleteTournament, deletePlayer, deleteGame, storageManager } from './lib/storage';
+import { loadData, saveData, saveTeam, deleteTeam, saveTournament, savePlayer, saveGame, deleteTournament, deletePlayer, deleteGame, storageManager, LocalStorageDriver, STORAGE_KEY } from './lib/storage';
 import { exportTournamentReport } from './lib/pdfGenerator';
 import { mockPlayers, mockGames, mockTournament, mockTeam } from './data/mockData';
 import { PlayersTab } from './components/tabs/PlayersTab';
@@ -239,6 +239,61 @@ function App() {
 
 
 
+  const handleImportData = useCallback(async (importedData: AppData) => {
+    console.log('--- START IMPORT ---');
+    console.log('Data received:', importedData);
+
+    try {
+      // 1. Validate structure
+      const validData: AppData = {
+        teams: Array.isArray(importedData.teams) ? importedData.teams : [],
+        tournaments: Array.isArray(importedData.tournaments) ? importedData.tournaments : [],
+        players: Array.isArray(importedData.players) ? importedData.players : [],
+        games: Array.isArray(importedData.games) ? importedData.games : []
+      };
+
+      console.log(`Validation: Found ${validData.teams.length} teams.`);
+
+      if (validData.teams.length === 0) {
+        throw new Error('The file contains no teams.');
+      }
+
+      // 2. Only ask for confirmation if there is existing data
+      const currentData = await loadData();
+      if (currentData.teams.length > 0) {
+        if (!confirm('This will overwrite your existing teams. Continue?')) {
+          console.log('Import cancelled by user.');
+          return;
+        }
+      }
+
+      // 3. Switch to Local Storage and Save
+      console.log('Step 1: Switching to Browser Cache...');
+      await storageManager.setDriver(new LocalStorageDriver());
+
+      console.log('Step 2: Saving data to:', STORAGE_KEY);
+      await saveData(validData);
+
+      // 4. Update memory state
+      setData(validData);
+
+      // 5. Verify persistence
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (!saved || saved === '{}') {
+        throw new Error('Failed to persist data to LocalStorage.');
+      }
+
+      console.log('Step 3: Persistence verified. Reloading...');
+      alert(`Success! Loaded ${validData.teams.length} teams. App will now restart.`);
+
+      window.location.reload();
+
+    } catch (err) {
+      console.error('IMPORT FAILED:', err);
+      alert('Import Failed: ' + (err as Error).message);
+    }
+  }, []);
+
   // Entry Point: Teams Hub
   if (!activeTeam && !useMockData) {
     return (
@@ -258,6 +313,7 @@ function App() {
           onEditTeam={(team) => { setEditItem(team); setModalType('team'); }}
           onDeleteTeam={(team) => handleDeleteTeam(team.id)}
           onDemoData={loadMockData}
+          onImportData={handleImportData}
           onOpenHelp={() => setModalType('help')}
         />
         <AppModals

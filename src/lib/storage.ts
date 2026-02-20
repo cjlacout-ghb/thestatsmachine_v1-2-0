@@ -1,6 +1,6 @@
 import type { AppData, Team, Tournament, Player, Game } from '../types';
 
-const STORAGE_KEY = 'softball_stats_data';
+export const STORAGE_KEY = 'softball_stats_data';
 
 const DEFAULT_DATA: AppData = {
     teams: [],
@@ -205,23 +205,27 @@ class StorageManager {
     }
 
     async load(): Promise<AppData> {
+        console.log(`[Storage] Loading data using driver: ${this.driver.name}`);
         const fileData = await this.driver.load();
 
         // If file driver returned default/empty but we have localStorage data, use that as fallback
-        // This handles the "Permission required" state after a Vite/page reload
         if (this.driver.type === 'file' &&
             fileData.teams.length === 0 &&
             fileData.tournaments.length === 0) {
+            console.log('[Storage] File driver returned empty data. Checking LocalStorage fallback...');
             const cached = localStorage.getItem(STORAGE_KEY);
             if (cached) {
                 try {
-                    return JSON.parse(cached);
+                    const parsed = JSON.parse(cached);
+                    console.log(`[Storage] Fallback success. Found ${parsed.teams?.length || 0} teams in cache.`);
+                    return parsed;
                 } catch {
                     return fileData;
                 }
             }
         }
 
+        console.log(`[Storage] Load complete. Found ${fileData.teams?.length || 0} teams.`);
         return fileData;
     }
 
