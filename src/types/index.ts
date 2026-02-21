@@ -37,6 +37,8 @@ export interface Game {
     gameType: 'regular' | 'playoff' | 'championship' | 'friendly';
     teamScore: number;
     opponentScore: number;
+    inningsPlayed?: number;
+    opponentInningsPlayed?: number;
     playerStats: PlayerGameStats[];
 }
 

@@ -119,105 +119,154 @@ function App() {
   // Handlers
   const handleSaveTeam = useCallback(async (team: Team) => {
     setSaveStatus('saving');
-    await saveTeam(team);
-    const updatedData = await loadData();
-    setData(updatedData);
-    setActiveTeam(team);
-    setModalType(null);
-    setEditItem(null);
-    setSaveStatus('saved');
-    setLastSaveTime(new Date());
+    try {
+      await saveTeam(team);
+      const updatedData = await loadData();
+      setData(updatedData);
+      setActiveTeam(team);
+      setModalType(null);
+      setEditItem(null);
+      setSaveStatus('saved');
+      setLastSaveTime(new Date());
+    } catch (error) {
+      console.error('Save failed:', error);
+      alert('Failed to save team changes. Please check permissions or storage space.');
+      setSaveStatus('unsaved');
+    }
   }, []);
 
   const handleDeleteTeam = useCallback(async (id: string) => {
     if (window.confirm('Delete this team and all its tournaments, players, and games?')) {
       console.log('Deleting team:', id);
-      const newData = await deleteTeam(id);
-      setData(newData);
-      if (activeTeam?.id === id) {
-        setActiveTeam(null);
-        setActiveTournament(null);
+      try {
+        const newData = await deleteTeam(id);
+        setData(newData);
+        if (activeTeam?.id === id) {
+          setActiveTeam(null);
+          setActiveTournament(null);
+        }
+        setUseMockData(false);
+      } catch (error) {
+        console.error('Delete failed:', error);
+        alert('Failed to delete team.');
       }
-      setUseMockData(false);
     }
   }, [activeTeam]);
 
   const handleSaveTournament = useCallback(async (tournament: Tournament) => {
     const isNew = !editItem;
     setSaveStatus('saving');
-    await saveTournament(tournament);
-    const updatedData = await loadData();
-    setData(updatedData);
-    setActiveTournament(tournament);
-    setModalType(null);
-    setEditItem(null);
-    setSaveStatus('saved');
-    setLastSaveTime(new Date());
-    if (isNew) {
-      setActiveTab('players');
+    try {
+      await saveTournament(tournament);
+      const updatedData = await loadData();
+      setData(updatedData);
+      setActiveTournament(tournament);
+      setModalType(null);
+      setEditItem(null);
+      setSaveStatus('saved');
+      setLastSaveTime(new Date());
+      if (isNew) {
+        setActiveTab('players');
+      }
+    } catch (error) {
+      console.error('Save failed:', error);
+      alert('Failed to save tournament changes.');
+      setSaveStatus('unsaved');
     }
   }, [editItem]);
 
   const handleDeleteTournament = useCallback(async (id: string) => {
     if (confirm('Delete this tournament and all its games? Players will remain in the Team Roster.')) {
-      const newData = await deleteTournament(id);
-      setData(newData);
-      if (activeTournament?.id === id) {
-        setActiveTournament(null);
-        setActiveTab('tournaments'); // Go back to tournaments list
+      try {
+        const newData = await deleteTournament(id);
+        setData(newData);
+        if (activeTournament?.id === id) {
+          setActiveTournament(null);
+          setActiveTab('tournaments'); // Go back to tournaments list
+        }
+        setUseMockData(false);
+      } catch (error) {
+        console.error('Delete failed:', error);
+        alert('Failed to delete tournament.');
       }
-      setUseMockData(false);
     }
   }, [activeTournament, activeTeam]);
 
   const handleSavePlayer = useCallback(async (player: Player) => {
     setSaveStatus('saving');
-    await savePlayer(player);
-    const updatedData = await loadData();
-    setData(updatedData);
-    setModalType(null);
-    setEditItem(null);
-    setSaveStatus('saved');
-    setLastSaveTime(new Date());
-  }, []);
-
-  const handleBulkImportPlayers = useCallback(async (players: Player[]) => {
-    const current = await loadData();
-    players.forEach(p => current.players.push(p));
-    await saveData(current);
-    const updatedData = await loadData();
-    setData(updatedData);
-    setModalType(null);
-  }, []);
-
-  const handleSaveGame = useCallback(async (game: Game) => {
-    setSaveStatus('saving');
-    await saveGame(game);
-    const updatedData = await loadData();
-    setData(updatedData);
-    setModalType(null);
-    setEditItem(null);
-    setSaveStatus('saved');
-    setLastSaveTime(new Date());
-  }, []);
-
-  const handleDeletePlayer = useCallback(async (id: string) => {
-    if (confirm('Delete this player? Game stats will be removed.')) {
-      await deletePlayer(id);
+    try {
+      await savePlayer(player);
       const updatedData = await loadData();
       setData(updatedData);
       setModalType(null);
       setEditItem(null);
+      setSaveStatus('saved');
+      setLastSaveTime(new Date());
+    } catch (error) {
+      console.error('Save failed:', error);
+      alert('Failed to save player changes.');
+      setSaveStatus('unsaved');
+    }
+  }, []);
+
+  const handleBulkImportPlayers = useCallback(async (players: Player[]) => {
+    try {
+      const current = await loadData();
+      players.forEach(p => current.players.push(p));
+      await saveData(current);
+      const updatedData = await loadData();
+      setData(updatedData);
+      setModalType(null);
+    } catch (error) {
+      console.error('Bulk import failed:', error);
+      alert('Failed to import players.');
+    }
+  }, []);
+
+  const handleSaveGame = useCallback(async (game: Game) => {
+    setSaveStatus('saving');
+    try {
+      await saveGame(game);
+      const updatedData = await loadData();
+      setData(updatedData);
+      setModalType(null);
+      setEditItem(null);
+      setSaveStatus('saved');
+      setLastSaveTime(new Date());
+    } catch (error) {
+      console.error('Save failed:', error);
+      alert('Failed to save game record.');
+      setSaveStatus('unsaved');
+    }
+  }, []);
+
+  const handleDeletePlayer = useCallback(async (id: string) => {
+    if (confirm('Delete this player? Game stats will be removed.')) {
+      try {
+        await deletePlayer(id);
+        const updatedData = await loadData();
+        setData(updatedData);
+        setModalType(null);
+        setEditItem(null);
+      } catch (error) {
+        console.error('Delete failed:', error);
+        alert('Failed to delete player.');
+      }
     }
   }, []);
 
   const handleDeleteGame = useCallback(async (id: string) => {
     if (confirm('Delete this game record permanently?')) {
-      await deleteGame(id);
-      const updatedData = await loadData();
-      setData(updatedData);
-      setModalType(null);
-      setEditItem(null);
+      try {
+        await deleteGame(id);
+        const updatedData = await loadData();
+        setData(updatedData);
+        setModalType(null);
+        setEditItem(null);
+      } catch (error) {
+        console.error('Delete failed:', error);
+        alert('Failed to delete game.');
+      }
     }
   }, []);
 

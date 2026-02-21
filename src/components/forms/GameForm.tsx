@@ -3,6 +3,7 @@ import type { Game, Player, PlayerGameStats } from '../../types';
 import { generateId } from '../../lib/storage';
 import { calcBatting, formatAvg, getAvgLevel } from '../../lib/calculations';
 import { formatLocalDate } from '../../lib/dateUtils';
+import { inningsToOuts, outsToInnings, formatInnings, normalizeInnings } from '../../lib/sportsUtils';
 
 
 interface GameFormProps {
@@ -24,6 +25,8 @@ export function GameForm({ game, tournamentId, onSave, onCancel, onDelete, initi
     const [gameType, setGameType] = useState<Game['gameType']>(game?.gameType || 'regular');
     const [teamScore, setTeamScore] = useState(game?.teamScore ?? 0);
     const [opponentScore, setOpponentScore] = useState(game?.opponentScore ?? 0);
+    const [teamInnings, setTeamInnings] = useState(game?.inningsPlayed ?? 7.0);
+    const [opponentInnings, setOpponentInnings] = useState(game?.opponentInningsPlayed ?? 7.0);
     const [playerStats, setPlayerStats] = useState<PlayerGameStats[]>(game?.playerStats || []);
     const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -46,6 +49,8 @@ export function GameForm({ game, tournamentId, onSave, onCancel, onDelete, initi
             gameType,
             teamScore,
             opponentScore,
+            inningsPlayed: teamInnings,
+            opponentInningsPlayed: opponentInnings,
             playerStats: playerStats
         });
     };
@@ -84,7 +89,7 @@ export function GameForm({ game, tournamentId, onSave, onCancel, onDelete, initi
                     <div>
                         <h3>{game ? 'Edit' : 'Add New'} Game</h3>
                         <p style={{ fontSize: '0.875rem', opacity: 0.8 }}>
-                            {formatLocalDate(date)} • vs {opponent || '(Opponent)'}
+                            {formatLocalDate(date)} • {homeAway === 'home' ? `${opponent || 'Opponent'} @ ${teamName}` : `${teamName} @ ${opponent || 'Opponent'}`}
                         </p>
                     </div>
                     {game && (
@@ -165,32 +170,37 @@ export function GameForm({ game, tournamentId, onSave, onCancel, onDelete, initi
                                 <span style={{ color: 'var(--accent-primary)' }}>📊</span> Final Score
                             </h4>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-lg)' }}>
-                                {/* Team Score Card */}
+                                {/* AWAY TEAM (LEFT) */}
                                 <div style={{
-                                    background: 'var(--bg-primary)',
+                                    background: (homeAway === 'away') ? 'var(--accent-soft)' : 'var(--bg-primary)',
                                     padding: 'var(--space-lg)',
                                     borderRadius: 'var(--radius-md)',
                                     display: 'flex',
                                     flexDirection: 'column',
-                                    minHeight: '140px'
+                                    minHeight: '140px',
+                                    border: (homeAway === 'away') ? '1px solid var(--accent-primary)' : '1px solid transparent',
+                                    transition: 'all 0.2s ease'
                                 }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-sm)' }}>
-                                        <span className="text-bold text-sm" style={{
-                                            color: 'var(--text-secondary)',
-                                            textTransform: 'uppercase',
-                                            maxWidth: '70%',
-                                            lineHeight: '1.2'
-                                        }}>{teamName}</span>
-                                        <div style={{ display: 'flex', gap: '6px' }}>
-                                            <button className="btn btn-secondary btn-sm" style={{ width: '28px', height: '28px', padding: 0, borderRadius: '50%' }} onClick={() => setTeamScore(s => Math.max(0, s - 1))}>-</button>
-                                            <button className="btn btn-primary btn-sm" style={{ width: '28px', height: '28px', padding: 0, borderRadius: '50%' }} onClick={() => setTeamScore(s => s + 1)}>+</button>
+                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                            <span className="text-bold text-sm" style={{
+                                                color: (homeAway === 'away') ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                                                textTransform: 'uppercase',
+                                                lineHeight: '1.2',
+                                                fontSize: (homeAway === 'away') ? '0.8rem' : '0.75rem'
+                                            }}>{homeAway === 'home' ? (opponent || 'Opponent') : teamName}</span>
+                                            <span style={{ fontSize: '0.65rem', fontWeight: '800', opacity: 0.5 }}>AWAY</span>
                                         </div>
                                     </div>
                                     <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                         <input
                                             type="number"
-                                            value={teamScore}
-                                            onChange={e => setTeamScore(parseInt(e.target.value) || 0)}
+                                            value={homeAway === 'home' ? opponentScore : teamScore}
+                                            onChange={e => {
+                                                const val = parseInt(e.target.value) || 0;
+                                                if (homeAway === 'home') setOpponentScore(val);
+                                                else setTeamScore(val);
+                                            }}
                                             className="text-center text-bold"
                                             style={{
                                                 width: '100%',
@@ -204,34 +214,59 @@ export function GameForm({ game, tournamentId, onSave, onCancel, onDelete, initi
                                             }}
                                         />
                                     </div>
+                                    <div style={{ marginTop: 'auto', paddingTop: 'var(--space-md)', borderTop: '1px solid var(--border-light)', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
+                                        <span style={{ fontSize: '0.65rem', fontWeight: '800', color: 'var(--text-muted)' }}>INN PLAYED</span>
+                                        <input
+                                            type="number"
+                                            step="0.1"
+                                            value={homeAway === 'home' ? opponentInnings : teamInnings}
+                                            onChange={e => {
+                                                const val = normalizeInnings(parseFloat(e.target.value) || 0);
+                                                if (homeAway === 'home') setOpponentInnings(val);
+                                                else setTeamInnings(val);
+                                            }}
+                                            className="form-control text-center"
+                                            style={{ width: '50px', padding: '2px', fontSize: '0.85rem' }}
+                                        />
+                                    </div>
                                 </div>
 
-                                {/* Opponent Score Card */}
+                                {/* HOME TEAM (RIGHT) */}
                                 <div style={{
-                                    background: 'var(--bg-primary)',
+                                    background: (homeAway === 'home') ? 'var(--accent-soft)' : 'var(--bg-primary)',
                                     padding: 'var(--space-lg)',
                                     borderRadius: 'var(--radius-md)',
                                     display: 'flex',
                                     flexDirection: 'column',
-                                    minHeight: '140px'
+                                    minHeight: '140px',
+                                    border: (homeAway === 'home') ? '1px solid var(--accent-primary)' : '1px solid transparent',
+                                    transition: 'all 0.2s ease'
                                 }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-sm)' }}>
-                                        <span className="text-bold text-sm" style={{
-                                            color: 'var(--text-secondary)',
-                                            textTransform: 'uppercase',
-                                            maxWidth: '70%',
-                                            lineHeight: '1.2'
-                                        }}>{opponent || 'Opponent'}</span>
-                                        <div style={{ display: 'flex', gap: '6px' }}>
-                                            <button className="btn btn-secondary btn-sm" style={{ width: '28px', height: '28px', padding: 0, borderRadius: '50%' }} onClick={() => setOpponentScore(s => Math.max(0, s - 1))}>-</button>
-                                            <button className="btn btn-primary btn-sm" style={{ width: '28px', height: '28px', padding: 0, borderRadius: '50%' }} onClick={() => setOpponentScore(s => s + 1)}>+</button>
+                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                            <span className="text-bold text-sm" style={{
+                                                color: (homeAway === 'home') ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                                                textTransform: 'uppercase',
+                                                lineHeight: '1.2',
+                                                fontSize: (homeAway === 'home') ? '0.8rem' : '0.75rem'
+                                            }}>{homeAway === 'home' ? teamName : (opponent || 'Opponent')}</span>
+                                            <span style={{
+                                                fontSize: '0.65rem',
+                                                fontWeight: '800',
+                                                color: (homeAway === 'home') ? 'var(--accent-primary)' : 'inherit',
+                                                opacity: (homeAway === 'home') ? 1 : 0.5
+                                            }}>HOME</span>
                                         </div>
                                     </div>
                                     <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                         <input
                                             type="number"
-                                            value={opponentScore}
-                                            onChange={e => setOpponentScore(parseInt(e.target.value) || 0)}
+                                            value={homeAway === 'home' ? teamScore : opponentScore}
+                                            onChange={e => {
+                                                const val = parseInt(e.target.value) || 0;
+                                                if (homeAway === 'home') setTeamScore(val);
+                                                else setOpponentScore(val);
+                                            }}
                                             className="text-center text-bold"
                                             style={{
                                                 width: '100%',
@@ -243,6 +278,21 @@ export function GameForm({ game, tournamentId, onSave, onCancel, onDelete, initi
                                                 padding: '0',
                                                 marginTop: '4px'
                                             }}
+                                        />
+                                    </div>
+                                    <div style={{ marginTop: 'auto', paddingTop: 'var(--space-md)', borderTop: '1px solid var(--border-light)', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
+                                        <span style={{ fontSize: '0.65rem', fontWeight: '800', color: 'var(--text-muted)' }}>INN PLAYED</span>
+                                        <input
+                                            type="number"
+                                            step="0.1"
+                                            value={homeAway === 'home' ? teamInnings : opponentInnings}
+                                            onChange={e => {
+                                                const val = normalizeInnings(parseFloat(e.target.value) || 0);
+                                                if (homeAway === 'home') setTeamInnings(val);
+                                                else setOpponentInnings(val);
+                                            }}
+                                            className="form-control text-center"
+                                            style={{ width: '50px', padding: '2px', fontSize: '0.85rem' }}
                                         />
                                     </div>
                                 </div>

@@ -101,6 +101,7 @@ export function AppContent({
                         onAddGame={onAddGame}
                         onEditTournament={onEditTournament}
                         onDeleteTournament={onDeleteTournament}
+                        teamName={activeTeam?.name}
                     />
                 );
             case 'stats':

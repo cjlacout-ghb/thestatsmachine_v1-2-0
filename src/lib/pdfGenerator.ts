@@ -146,7 +146,7 @@ export function exportTournamentReport(
     doc.setFontSize(14);
     doc.text('Game Log', 14, currentY);
 
-    const gameRows = games.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(g => {
+    const gameRows = games.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map(g => {
         const result = g.teamScore > g.opponentScore ? 'W' : g.teamScore < g.opponentScore ? 'L' : 'T';
         return [
             formatLocalDate(g.date),

@@ -13,9 +13,9 @@ export function Sidebar({ activeTab, setActiveTab, activeTeam, activeTournament,
 
     return (
         <aside className="app-sidebar">
-            {/* ORGANIZATION SECTION */}
+            {/* TEAM SECTION */}
             <div className="sidebar-group">
-                <h3 className="sidebar-header">ORGANIZATION</h3>
+                <h3 className="sidebar-header">TEAM</h3>
                 <nav className="sidebar-nav">
                     <button
                         className={`sidebar-item ${activeTab === 'team' && !activeTournament ? 'active' : ''}`}

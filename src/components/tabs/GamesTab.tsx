@@ -10,9 +10,10 @@ interface GamesTabProps {
     onAddGame?: () => void;
     onEditTournament?: (t: Tournament) => void;
     onDeleteTournament?: (id: string) => void;
+    teamName?: string;
 }
 
-export function GamesTab({ games, players, tournament, onSelectGame, onAddGame, onEditTournament, onDeleteTournament }: GamesTabProps) {
+export function GamesTab({ games, players, tournament, onSelectGame, onAddGame, onEditTournament, onDeleteTournament, teamName = 'Team' }: GamesTabProps) {
     if (games.length === 0) {
         return (
             <div className="dash-content">
@@ -33,9 +34,9 @@ export function GamesTab({ games, players, tournament, onSelectGame, onAddGame, 
     const getPlayerName = (id: string) =>
         players.find(p => p.id === id)?.name || 'Unknown';
 
-    // Sort games by date descending
+    // Sort games by date ascending (old to new)
     const sortedGames = [...games].sort((a, b) =>
-        new Date(b.date).getTime() - new Date(a.date).getTime()
+        new Date(a.date).getTime() - new Date(b.date).getTime()
     );
 
     return (
@@ -81,7 +82,9 @@ export function GamesTab({ games, players, tournament, onSelectGame, onAddGame, 
                                             }}>
                                                 {isWin ? 'WIN' : isLoss ? 'LOSS' : 'TIE'}
                                             </span>
-                                            <h4 className="text-bold" style={{ fontSize: '1.125rem' }}>vs {game.opponent}</h4>
+                                            <h4 className="text-bold" style={{ fontSize: '1.125rem' }}>
+                                                {game.homeAway === 'home' ? `${game.opponent} @ ${teamName}` : `${teamName} @ ${game.opponent}`}
+                                            </h4>
                                         </div>
                                         <div className="text-muted" style={{ fontSize: '0.8125rem', fontWeight: '500' }}>
                                             {game.homeAway === 'home' ? '🏠 Home' : '✈ Away'} • {game.gameType.toUpperCase()}
@@ -102,12 +105,25 @@ export function GamesTab({ games, players, tournament, onSelectGame, onAddGame, 
                                         </div>
                                     )}
 
-                                    <div className="text-mono text-bold text-right" style={{
-                                        fontSize: '2rem',
-                                        color: isWin ? 'var(--elite)' : isLoss ? 'var(--under)' : 'var(--text-primary)',
-                                        minWidth: '120px'
-                                    }}>
-                                        {game.teamScore} - {game.opponentScore}
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: '150px' }}>
+                                        <div className="text-mono text-bold" style={{
+                                            fontSize: '2rem',
+                                            color: isWin ? 'var(--elite)' : isLoss ? 'var(--under)' : 'var(--text-primary)',
+                                            lineHeight: 1
+                                        }}>
+                                            {game.homeAway === 'home' ? (
+                                                <>{game.opponentScore} - {game.teamScore}</>
+                                            ) : (
+                                                <>{game.teamScore} - {game.opponentScore}</>
+                                            )}
+                                        </div>
+                                        <div className="text-muted" style={{ fontSize: '0.75rem', fontWeight: '800', marginTop: '4px' }}>
+                                            {game.homeAway === 'home' ? (
+                                                <>{game.opponentInningsPlayed?.toFixed(1) || '7.0'} - {game.inningsPlayed?.toFixed(1) || '7.0'} INN</>
+                                            ) : (
+                                                <>{game.inningsPlayed?.toFixed(1) || '7.0'} - {game.opponentInningsPlayed?.toFixed(1) || '7.0'} INN</>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>

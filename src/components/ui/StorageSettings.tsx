@@ -35,7 +35,8 @@ export function StorageSettings({ onStorageChange, onClose }: StorageSettingsPro
 
             // Migrate current data to the new file if confirmed
             const currentData = await loadData();
-            if (currentData.tournaments.length > 0) {
+            const hasData = currentData.teams.length > 0 || currentData.tournaments.length > 0;
+            if (hasData) {
                 if (confirm('Would you like to migrate your current data to the new file?')) {
                     await newDriver.save(currentData);
                 }
@@ -56,7 +57,7 @@ export function StorageSettings({ onStorageChange, onClose }: StorageSettingsPro
         }
     };
 
-    const linkExistingFile = async () => {
+    const handleLinkExisting = async (mode: 'load' | 'save') => {
         try {
             const [handle] = await (window as any).showOpenFilePicker({
                 types: [{
@@ -66,6 +67,24 @@ export function StorageSettings({ onStorageChange, onClose }: StorageSettingsPro
             });
 
             const newDriver = new FileSystemDriver(handle);
+            const currentData = await loadData();
+            const hasExistingData = currentData.teams.length > 0 || currentData.tournaments.length > 0;
+
+            if (mode === 'save') {
+                if (confirm('⚠️ OVERWRITE FILE?\n\nThis will replace EVERYTHING in the selected file with your current app data.\n\nAre you sure?')) {
+                    await newDriver.save(currentData);
+                } else {
+                    return; // Abort
+                }
+            } else {
+                // Mode is load
+                if (hasExistingData) {
+                    if (!confirm('⚠️ LOAD FROM FILE?\n\nThis will replace your current app data with the contents of this file.\n\nUnsaved changes in your browser cache will be lost. Continue?')) {
+                        return; // Abort
+                    }
+                }
+            }
+
             await storageManager.setDriver(newDriver);
             await newDriver.setHandle(handle);
 
@@ -76,6 +95,7 @@ export function StorageSettings({ onStorageChange, onClose }: StorageSettingsPro
         } catch (err) {
             if ((err as Error).name !== 'AbortError') {
                 console.error('Failed to link file:', err);
+                alert('Could not link to the selected file. Please check permissions.');
             }
         }
     };
@@ -175,20 +195,30 @@ export function StorageSettings({ onStorageChange, onClose }: StorageSettingsPro
                                     <div className="text-muted" style={{ fontSize: '0.625rem', marginTop: '4px' }}>Linked to system file</div>
                                 </div>
                             ) : (
-                                <div style={{ display: 'flex', gap: 'var(--space-xs)' }}>
+                                <div style={{ display: 'flex', gap: 'var(--space-xs)', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                                     <button
                                         className="btn btn-secondary btn-sm"
                                         onClick={switchToFileSystem}
                                         disabled={!isFileSystemApiSupported}
+                                        title="Create a brand new file"
                                     >
-                                        Create New
+                                        New File
                                     </button>
                                     <button
                                         className="btn btn-secondary btn-sm"
-                                        onClick={linkExistingFile}
+                                        onClick={() => handleLinkExisting('load')}
                                         disabled={!isFileSystemApiSupported}
+                                        title="Pick an existing file and load its content"
                                     >
-                                        Open
+                                        Load File
+                                    </button>
+                                    <button
+                                        className="btn btn-secondary btn-sm"
+                                        onClick={() => handleLinkExisting('save')}
+                                        disabled={!isFileSystemApiSupported}
+                                        title="Pick an existing file and overwrite it with current app data"
+                                    >
+                                        Save to File
                                     </button>
                                 </div>
                             )}

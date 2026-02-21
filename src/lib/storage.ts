@@ -81,8 +81,9 @@ export class LocalStorageDriver implements StorageDriver {
     async save(data: AppData): Promise<void> {
         try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-        } catch {
-            console.error('Failed to save data to localStorage');
+        } catch (e) {
+            console.error('Failed to save data to localStorage', e);
+            throw new Error('Browser storage is full or unavailable.');
         }
     }
 }
@@ -146,12 +147,12 @@ export class FileSystemDriver implements StorageDriver {
             return parsed;
         } catch (err) {
             console.error('Failed to load file:', err);
-            return DEFAULT_DATA;
+            throw err; // Throw to let the manager handle the fallback
         }
     }
 
     async save(data: AppData): Promise<void> {
-        if (!this.handle) return;
+        if (!this.handle) throw new Error('No file handle available');
 
         try {
             const writable = await (this.handle as any).createWritable();
@@ -159,6 +160,7 @@ export class FileSystemDriver implements StorageDriver {
             await writable.close();
         } catch (err) {
             console.error('Failed to save file:', err);
+            throw new Error(`Failed to save to local file: ${err instanceof Error ? err.message : String(err)}`);
         }
     }
 
@@ -206,7 +208,23 @@ class StorageManager {
 
     async load(): Promise<AppData> {
         console.log(`[Storage] Loading data using driver: ${this.driver.name}`);
-        const fileData = await this.driver.load();
+        let fileData: AppData;
+
+        try {
+            fileData = await this.driver.load();
+        } catch (err) {
+            console.warn(`[Storage] Driver ${this.driver.name} failed to load. Checking LocalStorage fallback...`, err);
+            // Fallback to localStorage if driver fails
+            const cached = localStorage.getItem(STORAGE_KEY);
+            if (cached) {
+                try {
+                    return JSON.parse(cached);
+                } catch {
+                    return DEFAULT_DATA;
+                }
+            }
+            return DEFAULT_DATA;
+        }
 
         // If file driver returned default/empty but we have localStorage data, use that as fallback
         if (this.driver.type === 'file' &&
