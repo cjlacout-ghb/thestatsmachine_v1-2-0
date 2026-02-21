@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import type { Game, Player, PlayerGameStats } from '../../types';
 import { generateId } from '../../lib/storage';
-import { calcBatting, formatAvg, getAvgLevel } from '../../lib/calculations';
+import { calcBatting, calcPitching, calcFielding, formatAvg, formatERA, formatWHIP, getAvgLevel, getERALevel, getFldLevel } from '../../lib/calculations';
 import { formatLocalDate } from '../../lib/dateUtils';
-import { inningsToOuts, outsToInnings, formatInnings, normalizeInnings } from '../../lib/sportsUtils';
+import { normalizeInnings } from '../../lib/sportsUtils';
 
 
 interface GameFormProps {
@@ -302,60 +302,188 @@ export function GameForm({ game, tournamentId, onSave, onCancel, onDelete, initi
                 ) : (
                     <div className="stats-entry-container">
                         <div style={{ overflowX: 'auto' }}>
-                            <table className="stat-table" style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 8px' }}>
+                            <table className="stat-table" style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 2px', fontSize: '0.8rem' }}>
                                 <thead>
+                                    {/* Section Header Row */}
                                     <tr>
-                                        <th style={{ textAlign: 'left', padding: '12px' }}>Player</th>
+                                        <th rowSpan={2} style={{ textAlign: 'left', padding: '10px 12px', verticalAlign: 'bottom', minWidth: '130px' }}>Player</th>
+                                        {/* BATTING GROUP */}
+                                        <th colSpan={11} style={{ textAlign: 'center', padding: '4px 8px', background: 'color-mix(in srgb, var(--accent-primary) 8%, transparent)', color: 'var(--accent-primary)', fontSize: '0.65rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.08em', borderRadius: 'var(--radius-sm) var(--radius-sm) 0 0' }}>
+                                            ⚾ Batting
+                                        </th>
+                                        {/* PITCHING GROUP */}
+                                        <th colSpan={10} style={{ textAlign: 'center', padding: '4px 8px', background: 'color-mix(in srgb, #f59e0b 8%, transparent)', color: '#d97706', fontSize: '0.65rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.08em', borderRadius: 'var(--radius-sm) var(--radius-sm) 0 0' }}>
+                                            🥎 Pitching
+                                        </th>
+                                        {/* FIELDING GROUP */}
+                                        <th colSpan={players.some(p => p.primaryPosition === 'C') ? 7 : 4} style={{ textAlign: 'center', padding: '4px 8px', background: 'color-mix(in srgb, #10b981 8%, transparent)', color: '#059669', fontSize: '0.65rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.08em', borderRadius: 'var(--radius-sm) var(--radius-sm) 0 0' }}>
+                                            🧤 Fielding
+                                        </th>
+                                    </tr>
+                                    {/* Column Labels Row */}
+                                    <tr>
+                                        {/* Batting columns */}
                                         <th title="At Bats">AB</th>
                                         <th title="Hits">H</th>
                                         <th title="Doubles">2B</th>
                                         <th title="Triples">3B</th>
                                         <th title="Home Runs">HR</th>
-                                        <th title="Base on Balls (Walks)">BB</th>
+                                        <th title="Walks">BB</th>
                                         <th title="Hit By Pitch">HBP</th>
                                         <th title="Sacrifice Fly">SF</th>
+                                        <th title="Sacrifice Bunt">SAC</th>
                                         <th title="Runs Batted In">RBI</th>
                                         <th title="Runs Scored">R</th>
-                                        <th title="Batting Average" style={{ borderLeft: '1px solid var(--border-color)', paddingLeft: '16px' }}>AVG</th>
-                                        <th title="On-Base Percentage">OBP</th>
-                                        <th title="Innings Pitched" style={{ borderLeft: '1px solid var(--border-color)', paddingLeft: '16px' }}>IP</th>
+                                        {/* Batting computed */}
+                                        <th title="Batting Average" style={{ color: 'var(--accent-primary)', borderLeft: '1px solid var(--border-light)' }}>AVG</th>
+                                        <th title="On-Base Percentage" style={{ color: 'var(--accent-primary)' }}>OBP</th>
+                                        {/* Pitching columns */}
+                                        <th title="Innings Pitched" style={{ borderLeft: '2px solid var(--border-color)' }}>IP</th>
+                                        <th title="Hits Allowed">H</th>
+                                        <th title="Runs Allowed">R</th>
                                         <th title="Earned Runs">ER</th>
+                                        <th title="Walks Issued">BB</th>
+                                        <th title="Strikeouts">SO</th>
+                                        <th title="Home Runs Allowed">HR</th>
+                                        <th title="Pitch Count">PC</th>
+                                        {/* Pitching computed */}
+                                        <th title="Earned Run Average" style={{ color: '#d97706', borderLeft: '1px solid var(--border-light)' }}>ERA</th>
+                                        <th title="Walks + Hits per Inning Pitched" style={{ color: '#d97706' }}>WHIP</th>
+                                        {/* Fielding columns */}
+                                        <th title="Put Outs" style={{ borderLeft: '2px solid var(--border-color)' }}>PO</th>
+                                        <th title="Assists">A</th>
+                                        <th title="Errors">E</th>
+                                        {/* Fielding computed */}
+                                        <th title="Fielding Percentage" style={{ color: '#059669', borderLeft: '1px solid var(--border-light)' }}>FLD%</th>
+                                        {/* Catcher columns — only if any catcher on team */}
+                                        {players.some(p => p.primaryPosition === 'C') && (
+                                            <>
+                                                <th title="Caught Stealing" style={{ borderLeft: '1px solid var(--border-light)', color: '#059669' }}>CS</th>
+                                                <th title="Stolen Bases Allowed" style={{ color: '#059669' }}>SB</th>
+                                                <th title="Pick Offs" style={{ color: '#059669' }}>PK</th>
+                                                <th title="Passed Balls" style={{ color: '#059669' }}>PB</th>
+                                            </>
+                                        )}
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {players.map(player => {
                                         const stats = getPlayerStat(player.id);
-                                        const calculated = calcBatting(stats);
+                                        const calcBat = calcBatting(stats);
+                                        const calcPitch = calcPitching(stats);
+                                        const calcField = calcFielding(stats);
+                                        const isCatcher = player.primaryPosition === 'C';
+                                        const hasCatcherOnTeam = players.some(p => p.primaryPosition === 'C');
+
+                                        const cellStyle: React.CSSProperties = { padding: '4px 2px' };
+                                        const inputStyle: React.CSSProperties = { width: '42px', padding: '3px', fontSize: '0.8rem' };
+                                        const wideInputStyle: React.CSSProperties = { width: '52px', padding: '3px', fontSize: '0.8rem' };
+
                                         return (
-                                            <tr key={player.id} style={{ background: 'var(--bg-primary)', borderRadius: 'var(--radius-md)' }}>
-                                                <td style={{ padding: '12px', borderTopLeftRadius: 'var(--radius-md)', borderBottomLeftRadius: 'var(--radius-md)' }}>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                        <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', width: '20px' }}>#{player.jerseyNumber}</span>
-                                                        <span className="text-bold">{player.name}</span>
+                                            <tr key={player.id} style={{ background: 'var(--bg-primary)' }}>
+                                                {/* Player name */}
+                                                <td style={{ padding: '8px 10px', borderTopLeftRadius: 'var(--radius-sm)', borderBottomLeftRadius: 'var(--radius-sm)' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                        <span style={{ fontSize: '0.7rem', fontWeight: '800', color: 'var(--text-muted)', minWidth: '22px' }}>#{player.jerseyNumber}</span>
+                                                        <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
+                                                            <span className="text-bold" style={{ fontSize: '0.8rem' }}>{player.name}</span>
+                                                            <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: '700' }}>{player.primaryPosition}</span>
+                                                        </div>
                                                     </div>
                                                 </td>
-                                                <td><input type="number" className="form-control text-center input-sm" style={{ width: '45px', padding: '4px' }} value={stats.ab} onChange={e => updatePlayerStat(player.id, 'ab', parseInt(e.target.value) || 0)} /></td>
-                                                <td><input type="number" className="form-control text-center input-sm" style={{ width: '45px', padding: '4px' }} value={stats.h} onChange={e => updatePlayerStat(player.id, 'h', parseInt(e.target.value) || 0)} /></td>
-                                                <td><input type="number" className="form-control text-center input-sm" style={{ width: '45px', padding: '4px' }} value={stats.doubles} onChange={e => updatePlayerStat(player.id, 'doubles', parseInt(e.target.value) || 0)} /></td>
-                                                <td><input type="number" className="form-control text-center input-sm" style={{ width: '45px', padding: '4px' }} value={stats.triples} onChange={e => updatePlayerStat(player.id, 'triples', parseInt(e.target.value) || 0)} /></td>
-                                                <td><input type="number" className="form-control text-center input-sm" style={{ width: '45px', padding: '4px' }} value={stats.hr} onChange={e => updatePlayerStat(player.id, 'hr', parseInt(e.target.value) || 0)} /></td>
-                                                <td><input type="number" className="form-control text-center input-sm" style={{ width: '45px', padding: '4px' }} value={stats.bb} onChange={e => updatePlayerStat(player.id, 'bb', parseInt(e.target.value) || 0)} /></td>
-                                                <td><input type="number" className="form-control text-center input-sm" style={{ width: '45px', padding: '4px' }} value={stats.hbp} onChange={e => updatePlayerStat(player.id, 'hbp', parseInt(e.target.value) || 0)} /></td>
-                                                <td><input type="number" className="form-control text-center input-sm" style={{ width: '45px', padding: '4px' }} value={stats.sf} onChange={e => updatePlayerStat(player.id, 'sf', parseInt(e.target.value) || 0)} /></td>
-                                                <td><input type="number" className="form-control text-center input-sm" style={{ width: '45px', padding: '4px' }} value={stats.rbi} onChange={e => updatePlayerStat(player.id, 'rbi', parseInt(e.target.value) || 0)} /></td>
-                                                <td><input type="number" className="form-control text-center input-sm" style={{ width: '45px', padding: '4px' }} value={stats.r} onChange={e => updatePlayerStat(player.id, 'r', parseInt(e.target.value) || 0)} /></td>
-                                                <td style={{ borderLeft: '1px solid var(--border-color)', paddingLeft: '16px' }}>
-                                                    <span className={`text-mono text-bold ${getAvgLevel(calculated.avg)}`} style={{ fontSize: '0.875rem' }}>{formatAvg(calculated.avg)}</span>
+
+                                                {/* BATTING INPUTS */}
+                                                <td style={cellStyle}><input type="number" className="form-control text-center input-sm" style={inputStyle} value={stats.ab} onChange={e => updatePlayerStat(player.id, 'ab', parseInt(e.target.value) || 0)} /></td>
+                                                <td style={cellStyle}><input type="number" className="form-control text-center input-sm" style={inputStyle} value={stats.h} onChange={e => updatePlayerStat(player.id, 'h', parseInt(e.target.value) || 0)} /></td>
+                                                <td style={cellStyle}><input type="number" className="form-control text-center input-sm" style={inputStyle} value={stats.doubles} onChange={e => updatePlayerStat(player.id, 'doubles', parseInt(e.target.value) || 0)} /></td>
+                                                <td style={cellStyle}><input type="number" className="form-control text-center input-sm" style={inputStyle} value={stats.triples} onChange={e => updatePlayerStat(player.id, 'triples', parseInt(e.target.value) || 0)} /></td>
+                                                <td style={cellStyle}><input type="number" className="form-control text-center input-sm" style={inputStyle} value={stats.hr} onChange={e => updatePlayerStat(player.id, 'hr', parseInt(e.target.value) || 0)} /></td>
+                                                <td style={cellStyle}><input type="number" className="form-control text-center input-sm" style={inputStyle} value={stats.bb} onChange={e => updatePlayerStat(player.id, 'bb', parseInt(e.target.value) || 0)} /></td>
+                                                <td style={cellStyle}><input type="number" className="form-control text-center input-sm" style={inputStyle} value={stats.hbp} onChange={e => updatePlayerStat(player.id, 'hbp', parseInt(e.target.value) || 0)} /></td>
+                                                <td style={cellStyle}><input type="number" className="form-control text-center input-sm" style={inputStyle} value={stats.sf} onChange={e => updatePlayerStat(player.id, 'sf', parseInt(e.target.value) || 0)} /></td>
+                                                <td style={cellStyle}><input type="number" className="form-control text-center input-sm" style={inputStyle} value={stats.sac} onChange={e => updatePlayerStat(player.id, 'sac', parseInt(e.target.value) || 0)} /></td>
+                                                <td style={cellStyle}><input type="number" className="form-control text-center input-sm" style={inputStyle} value={stats.rbi} onChange={e => updatePlayerStat(player.id, 'rbi', parseInt(e.target.value) || 0)} /></td>
+                                                <td style={cellStyle}><input type="number" className="form-control text-center input-sm" style={inputStyle} value={stats.r} onChange={e => updatePlayerStat(player.id, 'r', parseInt(e.target.value) || 0)} /></td>
+
+                                                {/* BATTING COMPUTED */}
+                                                <td style={{ ...cellStyle, borderLeft: '1px solid var(--border-light)', paddingLeft: '8px' }}>
+                                                    <span className={`text-mono text-bold ${getAvgLevel(calcBat.avg)}`} style={{ fontSize: '0.8rem' }}>{formatAvg(calcBat.avg)}</span>
                                                 </td>
-                                                <td>
-                                                    <span className="text-mono text-muted" style={{ fontSize: '0.875rem' }}>{formatAvg(calculated.obp)}</span>
+                                                <td style={cellStyle}>
+                                                    <span className="text-mono text-muted" style={{ fontSize: '0.8rem' }}>{formatAvg(calcBat.obp)}</span>
                                                 </td>
-                                                <td style={{ borderLeft: '1px solid var(--border-color)', paddingLeft: '16px' }}>
-                                                    <input type="number" step="0.1" className="form-control text-center input-sm" style={{ width: '55px', padding: '4px' }} value={stats.ip} onChange={e => updatePlayerStat(player.id, 'ip', parseFloat(e.target.value) || 0)} />
+
+                                                {/* PITCHING INPUTS */}
+                                                <td style={{ ...cellStyle, borderLeft: '2px solid var(--border-color)', paddingLeft: '8px' }}>
+                                                    <input type="number" step="0.1" className="form-control text-center input-sm" style={wideInputStyle} value={stats.ip}
+                                                        onChange={e => updatePlayerStat(player.id, 'ip', normalizeInnings(parseFloat(e.target.value) || 0))} />
                                                 </td>
-                                                <td style={{ borderTopRightRadius: 'var(--radius-md)', borderBottomRightRadius: 'var(--radius-md)' }}>
-                                                    <input type="number" className="form-control text-center input-sm" style={{ width: '45px', padding: '4px' }} value={stats.er} onChange={e => updatePlayerStat(player.id, 'er', parseInt(e.target.value) || 0)} />
+                                                <td style={cellStyle}><input type="number" className="form-control text-center input-sm" style={inputStyle} value={stats.pH} onChange={e => updatePlayerStat(player.id, 'pH', parseInt(e.target.value) || 0)} /></td>
+                                                <td style={cellStyle}><input type="number" className="form-control text-center input-sm" style={inputStyle} value={stats.pR} onChange={e => updatePlayerStat(player.id, 'pR', parseInt(e.target.value) || 0)} /></td>
+                                                <td style={cellStyle}><input type="number" className="form-control text-center input-sm" style={inputStyle} value={stats.er} onChange={e => updatePlayerStat(player.id, 'er', parseInt(e.target.value) || 0)} /></td>
+                                                <td style={cellStyle}><input type="number" className="form-control text-center input-sm" style={inputStyle} value={stats.pBB} onChange={e => updatePlayerStat(player.id, 'pBB', parseInt(e.target.value) || 0)} /></td>
+                                                <td style={cellStyle}><input type="number" className="form-control text-center input-sm" style={inputStyle} value={stats.pSO} onChange={e => updatePlayerStat(player.id, 'pSO', parseInt(e.target.value) || 0)} /></td>
+                                                <td style={cellStyle}><input type="number" className="form-control text-center input-sm" style={inputStyle} value={stats.pHR} onChange={e => updatePlayerStat(player.id, 'pHR', parseInt(e.target.value) || 0)} /></td>
+                                                <td style={cellStyle}><input type="number" className="form-control text-center input-sm" style={wideInputStyle} value={stats.pitchCount} onChange={e => updatePlayerStat(player.id, 'pitchCount', parseInt(e.target.value) || 0)} /></td>
+
+                                                {/* PITCHING COMPUTED */}
+                                                <td style={{ ...cellStyle, borderLeft: '1px solid var(--border-light)', paddingLeft: '8px' }}>
+                                                    {stats.ip > 0
+                                                        ? <span className={`text-mono text-bold ${getERALevel(calcPitch.era)}`} style={{ fontSize: '0.8rem' }}>{formatERA(calcPitch.era)}</span>
+                                                        : <span className="text-muted" style={{ fontSize: '0.75rem' }}>—</span>
+                                                    }
                                                 </td>
+                                                <td style={cellStyle}>
+                                                    {stats.ip > 0
+                                                        ? <span className="text-mono" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{formatWHIP(calcPitch.whip)}</span>
+                                                        : <span className="text-muted" style={{ fontSize: '0.75rem' }}>—</span>
+                                                    }
+                                                </td>
+
+                                                {/* FIELDING INPUTS */}
+                                                <td style={{ ...cellStyle, borderLeft: '2px solid var(--border-color)', paddingLeft: '8px' }}>
+                                                    <input type="number" className="form-control text-center input-sm" style={inputStyle} value={stats.po} onChange={e => updatePlayerStat(player.id, 'po', parseInt(e.target.value) || 0)} />
+                                                </td>
+                                                <td style={cellStyle}><input type="number" className="form-control text-center input-sm" style={inputStyle} value={stats.a} onChange={e => updatePlayerStat(player.id, 'a', parseInt(e.target.value) || 0)} /></td>
+                                                <td style={cellStyle}><input type="number" className="form-control text-center input-sm" style={inputStyle} value={stats.e} onChange={e => updatePlayerStat(player.id, 'e', parseInt(e.target.value) || 0)} /></td>
+
+                                                {/* FIELDING COMPUTED */}
+                                                <td style={{ ...cellStyle, borderLeft: '1px solid var(--border-light)', paddingLeft: '8px', borderTopRightRadius: hasCatcherOnTeam ? 0 : 'var(--radius-sm)', borderBottomRightRadius: hasCatcherOnTeam ? 0 : 'var(--radius-sm)' }}>
+                                                    {(stats.po + stats.a + stats.e) > 0
+                                                        ? <span className={`text-mono text-bold ${getFldLevel(calcField.fldPct)}`} style={{ fontSize: '0.8rem' }}>{formatAvg(calcField.fldPct)}</span>
+                                                        : <span className="text-muted" style={{ fontSize: '0.75rem' }}>—</span>
+                                                    }
+                                                </td>
+
+                                                {/* CATCHER COLUMNS — only rendered if any catcher on team */}
+                                                {hasCatcherOnTeam && (
+                                                    <>
+                                                        <td style={{ ...cellStyle, borderLeft: '1px solid var(--border-light)' }}>
+                                                            {isCatcher
+                                                                ? <input type="number" className="form-control text-center input-sm" style={inputStyle} value={stats.cCS ?? 0} onChange={e => updatePlayerStat(player.id, 'cCS', parseInt(e.target.value) || 0)} />
+                                                                : <span className="text-muted" style={{ fontSize: '0.75rem' }}>—</span>
+                                                            }
+                                                        </td>
+                                                        <td style={cellStyle}>
+                                                            {isCatcher
+                                                                ? <input type="number" className="form-control text-center input-sm" style={inputStyle} value={stats.cSB ?? 0} onChange={e => updatePlayerStat(player.id, 'cSB', parseInt(e.target.value) || 0)} />
+                                                                : <span className="text-muted" style={{ fontSize: '0.75rem' }}>—</span>
+                                                            }
+                                                        </td>
+                                                        <td style={cellStyle}>
+                                                            {isCatcher
+                                                                ? <input type="number" className="form-control text-center input-sm" style={inputStyle} value={stats.pk ?? 0} onChange={e => updatePlayerStat(player.id, 'pk', parseInt(e.target.value) || 0)} />
+                                                                : <span className="text-muted" style={{ fontSize: '0.75rem' }}>—</span>
+                                                            }
+                                                        </td>
+                                                        <td style={{ ...cellStyle, borderTopRightRadius: 'var(--radius-sm)', borderBottomRightRadius: 'var(--radius-sm)' }}>
+                                                            {isCatcher
+                                                                ? <input type="number" className="form-control text-center input-sm" style={inputStyle} value={stats.pb ?? 0} onChange={e => updatePlayerStat(player.id, 'pb', parseInt(e.target.value) || 0)} />
+                                                                : <span className="text-muted" style={{ fontSize: '0.75rem' }}>—</span>
+                                                            }
+                                                        </td>
+                                                    </>
+                                                )}
                                             </tr>
                                         );
                                     })}

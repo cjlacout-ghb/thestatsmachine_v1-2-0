@@ -1,15 +1,17 @@
 import type { Player, Game } from '../../types';
 import { calcBatting, formatAvg, getAvgLevel } from '../../lib/calculations';
 import { EmptyState } from '../ui/EmptyState';
+import { useEffect } from 'react';
 
 interface PlayersTabProps {
     players: Player[];
     games: Game[];
     onSelectPlayer?: (player: Player) => void;
     onAddPlayer?: () => void;
+    highlightedItemId?: string | null;
 }
 
-export function PlayersTab({ players, games, onSelectPlayer, onAddPlayer }: PlayersTabProps) {
+export function PlayersTab({ players, games, onSelectPlayer, onAddPlayer, highlightedItemId }: PlayersTabProps) {
     // Get aggregated stats per player
     const getPlayerStats = (playerId: string) => {
         const playerGames = games.flatMap(g =>
@@ -18,6 +20,22 @@ export function PlayersTab({ players, games, onSelectPlayer, onAddPlayer }: Play
         if (playerGames.length === 0) return null;
         return calcBatting(playerGames);
     };
+
+    useEffect(() => {
+        if (highlightedItemId) {
+            const el = document.getElementById(`player-row-${highlightedItemId}`) || document.getElementById(`player-card-${highlightedItemId}`);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Add a brief highlight flash
+                el.style.transition = 'background-color 0.5s ease-out';
+                const originalBg = el.style.backgroundColor;
+                el.style.backgroundColor = 'var(--bg-card-hover)';
+                setTimeout(() => {
+                    el.style.backgroundColor = originalBg;
+                }, 1500);
+            }
+        }
+    }, [highlightedItemId]);
 
     return (
         <div className="dash-content">
@@ -42,7 +60,7 @@ export function PlayersTab({ players, games, onSelectPlayer, onAddPlayer }: Play
                         {players.slice(0, 4).map(p => {
                             const stats = getPlayerStats(p.id);
                             return (
-                                <div key={p.id} className="player-card" onClick={() => onSelectPlayer?.(p)} style={{ cursor: 'pointer' }}>
+                                <div id={`player-card-${p.id}`} key={p.id} className="player-card" onClick={() => onSelectPlayer?.(p)} style={{ cursor: 'pointer' }}>
                                     <div className="player-avatar" style={{ fontSize: '2rem', background: 'var(--accent-gradient)', color: 'white' }}>
                                         {p.name.split(' ').map(n => n[0]).join('')}
                                     </div>
@@ -111,7 +129,7 @@ export function PlayersTab({ players, games, onSelectPlayer, onAddPlayer }: Play
                                         const ab = games.flatMap(g => g.playerStats.filter(ps => ps.playerId === p.id)).reduce((s, ps) => s + ps.ab, 0);
 
                                         return (
-                                            <tr key={p.id}>
+                                            <tr id={`player-row-${p.id}`} key={p.id}>
                                                 <td className="text-bold" style={{ paddingLeft: 'var(--space-xl)' }}>{p.name}</td>
                                                 <td><span className="player-info-pill" style={{ fontSize: '0.65rem' }}>{p.primaryPosition}</span></td>
                                                 <td className="text-mono">{gCount}</td>

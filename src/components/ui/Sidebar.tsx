@@ -31,6 +31,13 @@ export function Sidebar({ activeTab, setActiveTab, activeTeam, activeTournament,
                         <span className="icon">👥</span>
                         <span>Roster</span>
                     </button>
+                    <button
+                        className={`sidebar-item ${activeTab === 'stats' && !activeTournament ? 'active' : ''}`}
+                        onClick={() => { onExitTournament(); setActiveTab('stats'); }}
+                    >
+                        <span className="icon">📊</span>
+                        <span>Season Stats</span>
+                    </button>
                 </nav>
             </div>
 

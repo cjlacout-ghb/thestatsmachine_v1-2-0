@@ -33,6 +33,7 @@ function App() {
   const [showMigrationBanner, setShowMigrationBanner] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');
   const [lastSaveTime, setLastSaveTime] = useState<Date | null>(null);
+  const [highlightedItemId, setHighlightedItemId] = useState<string | null>(null);
 
   // Load data on mount
   useEffect(() => {
@@ -413,16 +414,14 @@ function App() {
         filteredPlayers={filteredPlayers}
         searchGames={searchGames}
         onNavigateSearch={(target) => {
+          setHighlightedItemId(target.item.id);
           if (target.type === 'player') {
             setActiveTournament(null);
-            setActiveTab('players');
-            setEditItem(target.item);
-            setModalType('player');
+            // Wait slightly for tab switch before highlighting to ensure DOM is ready
+            setTimeout(() => setActiveTab('players'), 0);
           } else {
             setActiveTournament(target.tournament);
-            setActiveTab('games');
-            setEditItem(target.item);
-            setModalType('game');
+            setTimeout(() => setActiveTab('games'), 0);
           }
         }}
         onOpenHelp={() => setModalType('help')}
@@ -497,13 +496,16 @@ function App() {
       <div className="app-container">
         <Sidebar
           activeTab={activeTab}
-          setActiveTab={setActiveTab}
+          setActiveTab={(tab) => {
+            setActiveTab(tab);
+            setHighlightedItemId(null); // Clear highlight on manual tab change
+          }}
           activeTeam={activeTeam}
           activeTournament={activeTournament}
           onExitTournament={() => {
             setActiveTournament(null);
-            // Default to tournaments list if exiting
             setActiveTab('tournaments');
+            setHighlightedItemId(null);
           }}
         />
 
@@ -578,8 +580,15 @@ function App() {
             filteredPlayers={filteredPlayers}
             filteredGames={filteredGames}
             teamGames={searchGames}
-            onSetActiveTab={setActiveTab}
-            onSetActiveTournament={setActiveTournament}
+            highlightedItemId={highlightedItemId}
+            onSetActiveTab={(tab) => {
+              setActiveTab(tab);
+              setHighlightedItemId(null);
+            }}
+            onSetActiveTournament={(t) => {
+              setActiveTournament(t);
+              setHighlightedItemId(null);
+            }}
             onAddPlayer={() => { setEditItem(null); setModalType('player'); }}
             onAddGame={() => { setEditItem(null); setModalType('game'); }}
             onAddTournament={() => { setEditItem(null); setModalType('tournament'); }}

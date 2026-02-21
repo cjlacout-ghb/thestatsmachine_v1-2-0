@@ -1,6 +1,7 @@
 import type { Game, Player, Tournament } from '../../types';
 import { EmptyState } from '../ui/EmptyState';
 import { getMonthStr, getDayStr } from '../../lib/dateUtils';
+import { useEffect } from 'react';
 
 interface GamesTabProps {
     games: Game[];
@@ -11,9 +12,10 @@ interface GamesTabProps {
     onEditTournament?: (t: Tournament) => void;
     onDeleteTournament?: (id: string) => void;
     teamName?: string;
+    highlightedItemId?: string | null;
 }
 
-export function GamesTab({ games, players, tournament, onSelectGame, onAddGame, onEditTournament, onDeleteTournament, teamName = 'Team' }: GamesTabProps) {
+export function GamesTab({ games, players, tournament, onSelectGame, onAddGame, onEditTournament, onDeleteTournament, teamName = 'Team', highlightedItemId }: GamesTabProps) {
     if (games.length === 0) {
         return (
             <div className="dash-content">
@@ -39,6 +41,22 @@ export function GamesTab({ games, players, tournament, onSelectGame, onAddGame, 
         new Date(a.date).getTime() - new Date(b.date).getTime()
     );
 
+    useEffect(() => {
+        if (highlightedItemId) {
+            const el = document.getElementById(`game-card-${highlightedItemId}`);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Add a brief highlight flash
+                el.style.transition = 'background-color 0.5s ease-out';
+                const originalBg = el.style.backgroundColor;
+                el.style.backgroundColor = 'var(--bg-card-hover)';
+                setTimeout(() => {
+                    el.style.backgroundColor = originalBg;
+                }, 1500);
+            }
+        }
+    }, [highlightedItemId]);
+
     return (
         <div className="dash-content">
             <div style={{ display: 'grid', gap: 'var(--space-lg)' }}>
@@ -52,6 +70,7 @@ export function GamesTab({ games, players, tournament, onSelectGame, onAddGame, 
 
                     return (
                         <div
+                            id={`game-card-${game.id}`}
                             key={game.id}
                             className="card"
                             onClick={() => onSelectGame?.(game)}

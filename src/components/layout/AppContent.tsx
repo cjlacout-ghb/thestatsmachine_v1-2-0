@@ -4,7 +4,6 @@ import { TournamentsTab } from '../tabs/TournamentsTab';
 import { TeamTab } from '../tabs/TeamTab';
 import { GamesTab } from '../tabs/GamesTab';
 import { StatsTab } from '../tabs/StatsTab';
-import { exportTournamentReport } from '../../lib/pdfGenerator';
 
 interface AppContentProps {
     activeTab: TabId;
@@ -15,6 +14,7 @@ interface AppContentProps {
     filteredPlayers: Player[];
     filteredGames: Game[]; // Contextual games (Active Tournament)
     teamGames: Game[]; // All games for active team
+    highlightedItemId?: string | null;
 
     // Actions
     onSetActiveTab: (tab: TabId) => void;
@@ -39,6 +39,7 @@ export function AppContent({
     filteredPlayers,
     filteredGames,
     teamGames,
+    highlightedItemId,
     onSetActiveTab,
     onSetActiveTournament,
     onAddPlayer,
@@ -61,6 +62,7 @@ export function AppContent({
                         games={teamGames}
                         onSelectPlayer={onEditPlayer}
                         onAddPlayer={onAddPlayer}
+                        highlightedItemId={highlightedItemId}
                     />
                 );
             case 'tournaments':
@@ -102,12 +104,13 @@ export function AppContent({
                         onEditTournament={onEditTournament}
                         onDeleteTournament={onDeleteTournament}
                         teamName={activeTeam?.name}
+                        highlightedItemId={highlightedItemId}
                     />
                 );
             case 'stats':
                 return (
                     <StatsTab
-                        games={filteredGames}
+                        games={activeTournament ? filteredGames : teamGames}
                         players={filteredPlayers}
                         tournament={activeTournament}
                         onAddGame={onAddGame}

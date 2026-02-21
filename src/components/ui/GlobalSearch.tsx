@@ -13,14 +13,27 @@ export function GlobalSearch({ players, games, onSelectPlayer, onSelectGame }: G
     const [isOpen, setIsOpen] = useState(false);
     const wrapperRef = useRef<HTMLDivElement>(null);
 
+    const searchInputRef = useRef<HTMLInputElement>(null);
+
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
             if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
                 setIsOpen(false);
             }
         }
+        function handleKeyDown(event: KeyboardEvent) {
+            // Check for Cmd+K (Mac) or Ctrl+K (Windows/Linux)
+            if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
+                event.preventDefault();
+                searchInputRef.current?.focus();
+            }
+        }
         document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
+        document.addEventListener('keydown', handleKeyDown);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('keydown', handleKeyDown);
+        };
     }, []);
 
     // Filter Logic
@@ -39,17 +52,35 @@ export function GlobalSearch({ players, games, onSelectPlayer, onSelectGame }: G
 
     return (
         <div className="global-search" ref={wrapperRef} style={{ position: 'relative', width: '300px' }}>
-            <div className="search-input-wrapper" style={{ position: 'relative' }}>
-                <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', opacity: 0.5 }}>🔍</span>
+            <div className="search-input-wrapper" style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <span style={{ position: 'absolute', left: '12px', pointerEvents: 'none', opacity: 0.5 }}>🔍</span>
                 <input
+                    ref={searchInputRef}
                     type="text"
                     className="form-control"
                     placeholder="Search players or games..."
                     value={query}
                     onChange={e => { setQuery(e.target.value); setIsOpen(true); }}
                     onFocus={() => setIsOpen(true)}
-                    style={{ paddingLeft: '36px' }}
+                    style={{ paddingLeft: '36px', paddingRight: '48px', width: '100%' }}
                 />
+                <div style={{
+                    position: 'absolute',
+                    right: '12px',
+                    pointerEvents: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: 'var(--bg-subtle)',
+                    border: '1px solid var(--border-light)',
+                    borderRadius: '4px',
+                    padding: '2px 6px',
+                    fontSize: '0.65rem',
+                    fontWeight: 600,
+                    color: 'var(--text-muted)'
+                }}>
+                    {navigator.platform.toUpperCase().indexOf('MAC') >= 0 ? '⌘K' : 'Ctrl+K'}
+                </div>
             </div>
 
             {isOpen && query.trim() && (
