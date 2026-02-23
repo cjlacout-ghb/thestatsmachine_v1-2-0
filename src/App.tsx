@@ -1,13 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { AppData, Team, Tournament, Player, Game } from './types';
-import { loadData, saveData, saveTeam, deleteTeam, saveTournament, savePlayer, saveGame, deleteTournament, deletePlayer, deleteGame, storageManager, LocalStorageDriver, STORAGE_KEY } from './lib/storage';
-import { exportTournamentReport } from './lib/pdfGenerator';
+import { loadData, saveData } from './lib/storage';
 import { mockPlayers, mockGames, mockTournament, mockTeam } from './data/mockData';
-import { PlayersTab } from './components/tabs/PlayersTab';
-import { TournamentsTab } from './components/tabs/TournamentsTab';
-import { TeamTab } from './components/tabs/TeamTab';
-import { GamesTab } from './components/tabs/GamesTab';
-import { StatsTab } from './components/tabs/StatsTab';
 import { TeamsHub } from './components/ui/TeamsHub';
 import { Sidebar } from './components/ui/Sidebar';
 import { AppHeader } from './components/layout/AppHeader';
@@ -30,24 +24,14 @@ function App() {
   const [modalType, setModalType] = useState<ModalType>(null);
   const [editItem, setEditItem] = useState<Team | Tournament | Player | Game | null>(null);
   const [useMockData, setUseMockData] = useState(false);
-  const [showMigrationBanner, setShowMigrationBanner] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');
   const [lastSaveTime, setLastSaveTime] = useState<Date | null>(null);
   const [highlightedItemId, setHighlightedItemId] = useState<string | null>(null);
 
-  // Load data on mount
+
   useEffect(() => {
     const init = async () => {
-      await storageManager.init();
       const stored = await loadData();
-
-      // Phase 3: Check for migration need
-      const dismissed = localStorage.getItem('tsm_migration_dismissed');
-      if (storageManager.getDriver().type === 'local' && storageManager.hasLegacyData() && !dismissed) {
-        setShowMigrationBanner(true);
-      }
-
-      // No data - TeamsHub will handle the "Start Fresh" state
       setData(stored);
 
       // Restore session
@@ -68,6 +52,8 @@ function App() {
     };
     init();
   }, []);
+
+
 
   // Persist session context
   useEffect(() => {
@@ -121,9 +107,14 @@ function App() {
   const handleSaveTeam = useCallback(async (team: Team) => {
     setSaveStatus('saving');
     try {
-      await saveTeam(team);
-      const updatedData = await loadData();
-      setData(updatedData);
+      const updatedTeams = [...data.teams];
+      const idx = updatedTeams.findIndex(t => t.id === team.id);
+      if (idx >= 0) updatedTeams[idx] = team;
+      else updatedTeams.push(team);
+
+      const newData = { ...data, teams: updatedTeams };
+      await saveData(newData);
+      setData(newData);
       setActiveTeam(team);
       setModalType(null);
       setEditItem(null);
@@ -131,16 +122,24 @@ function App() {
       setLastSaveTime(new Date());
     } catch (error) {
       console.error('Save failed:', error);
-      alert('Failed to save team changes. Please check permissions or storage space.');
+      alert('Failed to save team changes.');
       setSaveStatus('unsaved');
     }
-  }, []);
+  }, [data]);
 
   const handleDeleteTeam = useCallback(async (id: string) => {
     if (window.confirm('Delete this team and all its tournaments, players, and games?')) {
-      console.log('Deleting team:', id);
       try {
-        const newData = await deleteTeam(id);
+        const newData = { ...data };
+        newData.teams = newData.teams.filter(t => t.id !== id);
+        newData.tournaments = newData.tournaments.filter(t => !t.participatingTeamIds?.includes(id));
+        newData.players = newData.players.filter(p => p.teamId !== id);
+        newData.games = newData.games.filter(g => {
+          const tournament = data.tournaments.find(t => t.id === g.tournamentId);
+          return tournament && tournament.participatingTeamIds?.includes(id);
+        });
+
+        await saveData(newData);
         setData(newData);
         if (activeTeam?.id === id) {
           setActiveTeam(null);
@@ -152,15 +151,20 @@ function App() {
         alert('Failed to delete team.');
       }
     }
-  }, [activeTeam]);
+  }, [data, activeTeam]);
 
   const handleSaveTournament = useCallback(async (tournament: Tournament) => {
     const isNew = !editItem;
     setSaveStatus('saving');
     try {
-      await saveTournament(tournament);
-      const updatedData = await loadData();
-      setData(updatedData);
+      const updatedTournaments = [...data.tournaments];
+      const idx = updatedTournaments.findIndex(t => t.id === tournament.id);
+      if (idx >= 0) updatedTournaments[idx] = tournament;
+      else updatedTournaments.push(tournament);
+
+      const newData = { ...data, tournaments: updatedTournaments };
+      await saveData(newData);
+      setData(newData);
       setActiveTournament(tournament);
       setModalType(null);
       setEditItem(null);
@@ -174,16 +178,20 @@ function App() {
       alert('Failed to save tournament changes.');
       setSaveStatus('unsaved');
     }
-  }, [editItem]);
+  }, [data, editItem]);
 
   const handleDeleteTournament = useCallback(async (id: string) => {
     if (confirm('Delete this tournament and all its games? Players will remain in the Team Roster.')) {
       try {
-        const newData = await deleteTournament(id);
+        const newData = { ...data };
+        newData.tournaments = newData.tournaments.filter(t => t.id !== id);
+        newData.games = newData.games.filter(g => g.tournamentId !== id);
+
+        await saveData(newData);
         setData(newData);
         if (activeTournament?.id === id) {
           setActiveTournament(null);
-          setActiveTab('tournaments'); // Go back to tournaments list
+          setActiveTab('tournaments');
         }
         setUseMockData(false);
       } catch (error) {
@@ -191,14 +199,19 @@ function App() {
         alert('Failed to delete tournament.');
       }
     }
-  }, [activeTournament, activeTeam]);
+  }, [data, activeTournament]);
 
   const handleSavePlayer = useCallback(async (player: Player) => {
     setSaveStatus('saving');
     try {
-      await savePlayer(player);
-      const updatedData = await loadData();
-      setData(updatedData);
+      const updatedPlayers = [...data.players];
+      const idx = updatedPlayers.findIndex(p => p.id === player.id);
+      if (idx >= 0) updatedPlayers[idx] = player;
+      else updatedPlayers.push(player);
+
+      const newData = { ...data, players: updatedPlayers };
+      await saveData(newData);
+      setData(newData);
       setModalType(null);
       setEditItem(null);
       setSaveStatus('saved');
@@ -208,28 +221,32 @@ function App() {
       alert('Failed to save player changes.');
       setSaveStatus('unsaved');
     }
-  }, []);
+  }, [data]);
 
   const handleBulkImportPlayers = useCallback(async (players: Player[]) => {
     try {
-      const current = await loadData();
-      players.forEach(p => current.players.push(p));
-      await saveData(current);
-      const updatedData = await loadData();
-      setData(updatedData);
+      const newData = { ...data };
+      newData.players = [...newData.players, ...players];
+      await saveData(newData);
+      setData(newData);
       setModalType(null);
     } catch (error) {
       console.error('Bulk import failed:', error);
       alert('Failed to import players.');
     }
-  }, []);
+  }, [data]);
 
   const handleSaveGame = useCallback(async (game: Game) => {
     setSaveStatus('saving');
     try {
-      await saveGame(game);
-      const updatedData = await loadData();
-      setData(updatedData);
+      const updatedGames = [...data.games];
+      const idx = updatedGames.findIndex(g => g.id === game.id);
+      if (idx >= 0) updatedGames[idx] = game;
+      else updatedGames.push(game);
+
+      const newData = { ...data, games: updatedGames };
+      await saveData(newData);
+      setData(newData);
       setModalType(null);
       setEditItem(null);
       setSaveStatus('saved');
@@ -239,14 +256,20 @@ function App() {
       alert('Failed to save game record.');
       setSaveStatus('unsaved');
     }
-  }, []);
+  }, [data]);
 
   const handleDeletePlayer = useCallback(async (id: string) => {
     if (confirm('Delete this player? Game stats will be removed.')) {
       try {
-        await deletePlayer(id);
-        const updatedData = await loadData();
-        setData(updatedData);
+        const newData = { ...data };
+        newData.players = newData.players.filter(p => p.id !== id);
+        newData.games = newData.games.map(g => ({
+          ...g,
+          playerStats: g.playerStats.filter(ps => ps.playerId !== id)
+        }));
+
+        await saveData(newData);
+        setData(newData);
         setModalType(null);
         setEditItem(null);
       } catch (error) {
@@ -254,14 +277,16 @@ function App() {
         alert('Failed to delete player.');
       }
     }
-  }, []);
+  }, [data]);
 
   const handleDeleteGame = useCallback(async (id: string) => {
     if (confirm('Delete this game record permanently?')) {
       try {
-        await deleteGame(id);
-        const updatedData = await loadData();
-        setData(updatedData);
+        const newData = { ...data };
+        newData.games = newData.games.filter(g => g.id !== id);
+
+        await saveData(newData);
+        setData(newData);
         setModalType(null);
         setEditItem(null);
       } catch (error) {
@@ -269,7 +294,7 @@ function App() {
         alert('Failed to delete game.');
       }
     }
-  }, []);
+  }, [data]);
 
   const loadMockData = async () => {
     const mockData: AppData = {
@@ -290,11 +315,7 @@ function App() {
 
 
   const handleImportData = useCallback(async (importedData: AppData) => {
-    console.log('--- START IMPORT ---');
-    console.log('Data received:', importedData);
-
     try {
-      // 1. Validate structure
       const validData: AppData = {
         teams: Array.isArray(importedData.teams) ? importedData.teams : [],
         tournaments: Array.isArray(importedData.tournaments) ? importedData.tournaments : [],
@@ -302,70 +323,70 @@ function App() {
         games: Array.isArray(importedData.games) ? importedData.games : []
       };
 
-      console.log(`Validation: Found ${validData.teams.length} teams.`);
-
       if (validData.teams.length === 0) {
         throw new Error('The file contains no teams.');
       }
 
-      // 2. Only ask for confirmation if there is existing data
-      const currentData = await loadData();
-      if (currentData.teams.length > 0) {
-        if (!confirm('This will overwrite your existing teams. Continue?')) {
-          console.log('Import cancelled by user.');
+      if (data.teams.length > 0) {
+        if (!confirm('This will overwrite your existing data. Continue?')) {
           return;
         }
       }
 
-      // 3. Switch to Local Storage and Save
-      console.log('Step 1: Switching to Browser Cache...');
-      await storageManager.setDriver(new LocalStorageDriver());
-
-      console.log('Step 2: Saving data to:', STORAGE_KEY);
       await saveData(validData);
-
-      // 4. Update memory state
       setData(validData);
-
-      // 5. Verify persistence
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (!saved || saved === '{}') {
-        throw new Error('Failed to persist data to LocalStorage.');
-      }
-
-      console.log('Step 3: Persistence verified. Reloading...');
       alert(`Success! Loaded ${validData.teams.length} teams. App will now restart.`);
-
       window.location.reload();
-
     } catch (err) {
       console.error('IMPORT FAILED:', err);
       alert('Import Failed: ' + (err as Error).message);
     }
+  }, [data]);
+
+  const handleStorageReset = useCallback(async () => {
+    const newData = await loadData();
+    setData(newData);
+    setActiveTeam(null);
+    setActiveTournament(null);
   }, []);
 
   // Entry Point: Teams Hub
   if (!activeTeam && !useMockData) {
     return (
       <div className="app">
-        <TeamsHub
-          teams={data.teams}
-          tournaments={data.tournaments}
-          games={data.games}
-          onSelectTeam={(team) => {
-            setActiveTeam(team);
-            // Default to Players Tab
-            setActiveTab('players');
-            // Reset active tournament
-            setActiveTournament(null);
-          }}
-          onAddTeam={() => setModalType('team')}
-          onEditTeam={(team) => { setEditItem(team); setModalType('team'); }}
-          onDeleteTeam={(team) => handleDeleteTeam(team.id)}
-          onDemoData={loadMockData}
-          onImportData={handleImportData}
+        <AppHeader
+          activeTeam={activeTeam}
+          saveStatus={saveStatus}
+          lastSaveTime={lastSaveTime}
+          onManualSave={handleManualSave}
+          onSwitchTeam={() => setActiveTeam(null)}
+          onOpenStorage={() => setModalType('storage')}
+          data={data}
+          filteredPlayers={filteredPlayers}
+          searchGames={searchGames}
+          onNavigateSearch={() => { }}
           onOpenHelp={() => setModalType('help')}
         />
+        <div>
+          <TeamsHub
+            teams={data.teams}
+            tournaments={data.tournaments}
+            games={data.games}
+            onSelectTeam={(team) => {
+              setActiveTeam(team);
+              // Default to Players Tab
+              setActiveTab('players');
+              // Reset active tournament
+              setActiveTournament(null);
+            }}
+            onAddTeam={() => setModalType('team')}
+            onEditTeam={(team) => { setEditItem(team); setModalType('team'); }}
+            onDeleteTeam={(team) => handleDeleteTeam(team.id)}
+            onDemoData={loadMockData}
+            onImportData={handleImportData}
+            onOpenHelp={() => setModalType('help')}
+          />
+        </div>
         <AppModals
           modalType={modalType}
           editItem={editItem}
@@ -380,12 +401,7 @@ function App() {
           onDeletePlayer={handleDeletePlayer}
           onDeleteGame={handleDeleteGame}
           onBulkImportPlayers={handleBulkImportPlayers}
-          onStorageReset={async () => {
-            const newData = await loadData();
-            setData(newData);
-            setActiveTeam(null);
-            setActiveTournament(null);
-          }}
+          onStorageReset={handleStorageReset}
         />
       </div>
     );
@@ -403,13 +419,11 @@ function App() {
     <div className="app">
       <AppHeader
         activeTeam={activeTeam}
-        activeTournament={activeTournament}
         saveStatus={saveStatus}
         lastSaveTime={lastSaveTime}
         onManualSave={handleManualSave}
         onSwitchTeam={() => setActiveTeam(null)}
         onOpenStorage={() => setModalType('storage')}
-        activeTab={activeTab}
         data={data}
         filteredPlayers={filteredPlayers}
         searchGames={searchGames}
@@ -428,43 +442,7 @@ function App() {
       />
 
 
-      {/* Migration Banner */}
-      {showMigrationBanner && (
-        <div className="banner danger" style={{
-          padding: '12px 16px',
-          textAlign: 'center',
-          fontSize: '0.9rem',
-          fontWeight: '500',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 'var(--space-md)'
-        }}>
-          <span>⚠️ Your data is currently stored in the unstable browser cache.</span>
-          <button
-            onClick={() => setModalType('storage')}
-            className="btn btn-primary"
-            style={{
-              padding: '4px 12px',
-              fontSize: '0.75rem',
-              background: 'white',
-              color: 'var(--under)'
-            }}
-          >
-            Move to Local File
-          </button>
-          <button
-            onClick={() => {
-              setShowMigrationBanner(false);
-              localStorage.setItem('tsm_migration_dismissed', 'true');
-            }}
-            style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '1.2rem' }}
-            title="Dismiss Permanently"
-          >
-            ×
-          </button>
-        </div>
-      )}
+
 
       {/* Mock data banner */}
       {useMockData && (
@@ -614,16 +592,7 @@ function App() {
             onDeletePlayer={handleDeletePlayer}
             onDeleteGame={handleDeleteGame}
             onBulkImportPlayers={handleBulkImportPlayers}
-            onStorageReset={async () => {
-              const newData = await loadData();
-              setData(newData);
-              setActiveTeam(null);
-              setActiveTournament(null);
-              if (storageManager.getDriver().type === 'file') {
-                setShowMigrationBanner(false);
-                localStorage.setItem('tsm_migration_dismissed', 'true');
-              }
-            }}
+            onStorageReset={handleStorageReset}
           />
         </main>
       </div>

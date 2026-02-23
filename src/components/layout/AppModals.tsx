@@ -4,7 +4,7 @@ import { TournamentForm } from '../forms/TournamentForm';
 import { PlayerForm } from '../forms/PlayerForm';
 import { GameForm } from '../forms/GameForm';
 import { StorageSettings } from '../ui/StorageSettings';
-import { storageManager } from '../../lib/storage';
+
 
 export type ModalType = 'team' | 'tournament' | 'player' | 'game' | 'storage' | 'help' | null;
 
@@ -72,7 +72,7 @@ export function AppModals({
                         onDelete={editItem ? () => onDeletePlayer?.((editItem as Player).id) : undefined}
                     />
                 )}
-                {modalType === 'game' && activeTournament && (
+                {modalType === 'game' && activeTournament && activeTeam && (
                     <GameForm
                         game={editItem as Game | undefined}
                         tournamentId={activeTournament.id}

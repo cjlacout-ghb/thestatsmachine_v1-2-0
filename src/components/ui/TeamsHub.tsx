@@ -49,24 +49,6 @@ export function TeamsHub({ teams, tournaments, games, onSelectTeam, onAddTeam, o
     if (teams.length === 0) {
         return (
             <div className="app-hub">
-                <header className="hub-header">
-                    <div className="logo">
-                        <div className="logo-icon header-logo-icon">
-                            <SoftballLogo size={24} />
-                        </div>
-                        <div className="logo-text">
-                            <h1>The Stats Machine</h1>
-                            <span>v1.2.0</span>
-                        </div>
-                    </div>
-                    <button
-                        className="btn btn-ghost btn-sm"
-                        onClick={onOpenHelp}
-                        style={{ fontWeight: '700', marginLeft: 'auto' }}
-                    >
-                        📖 Help
-                    </button>
-                </header>
                 <div className="hub-zero-state">
                     <main className="hub-content hub-zero-content">
                         <div className="hero-section" style={{ textAlign: 'center', marginBottom: 'var(--space-2xl)' }}>
@@ -121,26 +103,6 @@ export function TeamsHub({ teams, tournaments, games, onSelectTeam, onAddTeam, o
 
     return (
         <div className="app-hub">
-            <header className="hub-header">
-                <div className="logo">
-                    <div className="logo-icon header-logo-icon">
-                        <SoftballLogo size={24} />
-                    </div>
-                    <div className="logo-text">
-                        <h1>The Stats Machine</h1>
-                        <span>v1.2.0</span>
-                    </div>
-                </div>
-                <button
-                    className="btn btn-ghost btn-sm"
-                    onClick={onOpenHelp}
-                    style={{ fontWeight: '700', marginLeft: 'auto' }}
-                >
-                    📖 Help
-                </button>
-            </header>
-
-
             <main className="hub-content">
                 <div className="hub-intro">
                     <h2 className="hub-title">My Teams</h2>

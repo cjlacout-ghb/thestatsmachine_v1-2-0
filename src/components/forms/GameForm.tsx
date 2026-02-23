@@ -34,6 +34,14 @@ export function GameForm({ game, tournamentId, onSave, onCancel, onDelete, initi
         const errs: Record<string, string> = {};
         if (!opponent.trim()) errs.opponent = 'Opponent is required';
         if (!date) errs.date = 'Date is required';
+        if (teamInnings <= 0) errs.teamInnings = 'Team innings played must be greater than 0';
+        if (opponentInnings <= 0) errs.opponentInnings = 'Opponent innings played must be greater than 0';
+
+        const invalidPlayers = playerStats.filter(p => p.h > p.ab).map(p => players.find(pl => pl.id === p.playerId)?.name || 'Unknown Player');
+        if (invalidPlayers.length > 0) {
+            errs.playerStats = `Hits cannot exceed At-Bats for: ${invalidPlayers.join(', ')}`;
+        }
+
         setErrors(errs);
         return Object.keys(errs).length === 0;
     };
@@ -330,8 +338,8 @@ export function GameForm({ game, tournamentId, onSave, onCancel, onDelete, initi
                                         <th title="Home Runs">HR</th>
                                         <th title="Walks">BB</th>
                                         <th title="Hit By Pitch">HBP</th>
-                                        <th title="Sacrifice Fly">SF</th>
-                                        <th title="Sacrifice Bunt">SAC</th>
+                                        <th title="Sacrifice Fly (Does not count toward AB)">SF</th>
+                                        <th title="Sacrifice Bunt (Does not count toward AB)">SAC</th>
                                         <th title="Runs Batted In">RBI</th>
                                         <th title="Runs Scored">R</th>
                                         {/* Batting computed */}
@@ -393,8 +401,8 @@ export function GameForm({ game, tournamentId, onSave, onCancel, onDelete, initi
                                                 </td>
 
                                                 {/* BATTING INPUTS */}
-                                                <td style={cellStyle}><input type="number" className="form-control text-center input-sm" style={inputStyle} value={stats.ab} onChange={e => updatePlayerStat(player.id, 'ab', parseInt(e.target.value) || 0)} /></td>
-                                                <td style={cellStyle}><input type="number" className="form-control text-center input-sm" style={inputStyle} value={stats.h} onChange={e => updatePlayerStat(player.id, 'h', parseInt(e.target.value) || 0)} /></td>
+                                                <td style={cellStyle}><input type="number" className="form-control text-center input-sm" style={{ ...inputStyle, border: stats.h > stats.ab ? '1px solid var(--danger-color)' : undefined }} value={stats.ab} onChange={e => updatePlayerStat(player.id, 'ab', parseInt(e.target.value) || 0)} /></td>
+                                                <td style={cellStyle}><input type="number" className="form-control text-center input-sm" style={{ ...inputStyle, border: stats.h > stats.ab ? '1px solid var(--danger-color)' : undefined }} value={stats.h} onChange={e => updatePlayerStat(player.id, 'h', parseInt(e.target.value) || 0)} /></td>
                                                 <td style={cellStyle}><input type="number" className="form-control text-center input-sm" style={inputStyle} value={stats.doubles} onChange={e => updatePlayerStat(player.id, 'doubles', parseInt(e.target.value) || 0)} /></td>
                                                 <td style={cellStyle}><input type="number" className="form-control text-center input-sm" style={inputStyle} value={stats.triples} onChange={e => updatePlayerStat(player.id, 'triples', parseInt(e.target.value) || 0)} /></td>
                                                 <td style={cellStyle}><input type="number" className="form-control text-center input-sm" style={inputStyle} value={stats.hr} onChange={e => updatePlayerStat(player.id, 'hr', parseInt(e.target.value) || 0)} /></td>

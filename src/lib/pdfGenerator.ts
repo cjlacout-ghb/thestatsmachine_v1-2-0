@@ -14,12 +14,17 @@ export function exportTournamentReport(
     const title = `The Stats Machine Report: ${tournament.name}`;
     const date = new Date().toLocaleDateString();
 
+    const wins = games.filter(g => g.teamScore > g.opponentScore).length;
+    const losses = games.filter(g => g.teamScore < g.opponentScore).length;
+    const ties = games.filter(g => g.teamScore === g.opponentScore).length;
+    const recordStr = ties > 0 ? `${wins}-${losses}-${ties}` : `${wins}-${losses}`;
+
     // Header
     doc.setFontSize(18);
     doc.text(title, 14, 22);
     doc.setFontSize(11);
     doc.text(`Generated: ${date}`, 14, 30);
-    doc.text(`Games: ${games.length} | Players: ${players.length}`, 14, 36);
+    doc.text(`Games: ${games.length} | Record: ${recordStr} | Players: ${players.length}`, 14, 36);
 
     // 1. Batting Stats
     doc.setFontSize(14);
@@ -31,39 +36,33 @@ export function exportTournamentReport(
         const stats = calcBatting(pGames);
         return [
             p.name,
-            String(p.jerseyNumber),
             pGames.length,
-            stats.pa,
-            formatAvg(stats.avg),
-            formatAvg(stats.obp),
-            formatAvg(stats.slg),
-            stats.ops.toFixed(3),
-            stats.singles, // 1B
-            stats.xbh - stats.tb + stats.singles, // 2B (approx if not tracked directly) -> We track doubles directly!
-            // Wait, let's use the stats object correctly.
-            // We calculate batting stats from scratch in calcBatting, but it returns aggregated values.
-            // Let's re-calculate raw counts for the table.
+            pGames.reduce((s, g) => s + g.ab, 0), // AB
+            pGames.reduce((s, g) => s + g.r, 0), // R
             pGames.reduce((s, g) => s + g.h, 0), // H
             pGames.reduce((s, g) => s + g.doubles, 0), // 2B
             pGames.reduce((s, g) => s + g.triples, 0), // 3B
             pGames.reduce((s, g) => s + g.hr, 0), // HR
             pGames.reduce((s, g) => s + g.rbi, 0), // RBI
-            pGames.reduce((s, g) => s + g.r, 0), // R
             pGames.reduce((s, g) => s + g.bb, 0), // BB
-            pGames.reduce((s, g) => s + g.so, 0), // SO
+            pGames.reduce((s, g) => s + g.so, 0), // K
+            formatAvg(stats.avg),
+            formatAvg(stats.obp),
+            formatAvg(stats.slg),
+            stats.ops.toFixed(3),
         ];
     }).filter(Boolean) as (string | number)[][]; // Use type assertion to avoid filter(Boolean) issues
 
     // Sort by AVG descending
     battingRows.sort((a, b) => {
-        const avgA = parseFloat(String(a[4]));
-        const avgB = parseFloat(String(b[4]));
+        const avgA = parseFloat(String(a[11]));
+        const avgB = parseFloat(String(b[11]));
         return avgB - avgA;
     });
 
     autoTable(doc, {
         startY: 52,
-        head: [['Player', '#', 'G', 'PA', 'AVG', 'OBP', 'SLG', 'OPS', 'H', '2B', '3B', 'HR', 'RBI', 'R', 'BB', 'K']],
+        head: [['Player', 'G', 'AB', 'R', 'H', '2B', '3B', 'HR', 'RBI', 'BB', 'K', 'AVG', 'OBP', 'SLG', 'OPS']],
         body: battingRows,
         theme: 'grid',
         headStyles: { fillColor: [66, 66, 66] },
